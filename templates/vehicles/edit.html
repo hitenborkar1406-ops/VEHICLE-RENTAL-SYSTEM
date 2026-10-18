@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Edit Vehicle — Vehicle Rental System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Edit Vehicle</h1>
+    <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-outline">← Back to Vehicles</a>
+</div>
+
+{% if errors %}
+<div class="flash-messages">
+    <div class="flash-message flash-error" role="alert">
+        <span class="flash-icon">❌</span>
+        <span class="flash-text">
+            {% if errors is mapping %}
+                <ul style="margin: 0; padding-left: 1.5rem;">
+                {% for field, messages in errors.items() %}
+                    {% for msg in messages %}
+                    <li>{{ field|capitalize }}: {{ msg }}</li>
+                    {% endfor %}
+                {% endfor %}
+                </ul>
+            {% else %}
+                {{ errors }}
+            {% endif %}
+        </span>
+        <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+    </div>
+</div>
+{% endif %}
+
+<div class="form-card">
+    <form method="POST" action="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle['id']) }}" class="vehicle-form" id="editVehicleForm" novalidate>
+        <div class="form-group">
+            <label for="registration_number" class="form-label">Registration Number <span class="required">*</span></label>
+            <input type="text" id="registration_number" name="registration_number" 
+                   class="form-input {% if errors and errors.registration_number %}error{% endif %}" placeholder="e.g., MH-01-AB-1234"
+                   value="{{ form_data.get('registration_number', vehicle['registration_number']) }}" required aria-describedby="regHint {% if errors and errors.registration_number %}regError{% endif %}">
+            <small id="regHint" class="form-hint">Must be unique across all vehicles</small>
+            {% if errors and errors.registration_number %}
+                <small id="regError" class="form-hint form-hint-warning" role="alert">{{ errors.registration_number[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="name" class="form-label">Vehicle Name <span class="required">*</span></label>
+            <input type="text" id="name" name="name" 
+                   class="form-input {% if errors and errors.name %}error{% endif %}" placeholder="e.g., Toyota Innova Crysta"
+                   value="{{ form_data.get('name', vehicle['name']) }}" required aria-describedby="nameHint {% if errors and errors.name %}nameError{% endif %}">
+            {% if errors and errors.name %}
+                <small id="nameError" class="form-hint form-hint-warning" role="alert">{{ errors.name[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="type" class="form-label">Vehicle Type <span class="required">*</span></label>
+                <select id="type" name="type" class="form-select {% if errors and errors.type %}error{% endif %}" required aria-describedby="typeHint {% if errors and errors.type %}typeError{% endif %}">
+                    <option value="">Select type...</option>
+                    {% for t in vehicle_types %}
+                        <option value="{{ t }}" {% if form_data.get('type', vehicle['type']) == t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors and errors.type %}
+                    <small id="typeError" class="form-hint form-hint-warning" role="alert">{{ errors.type[0] }}</small>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="daily_rental_rate" class="form-label">Daily Rental Rate (₹) <span class="required">*</span></label>
+                <input type="number" id="daily_rental_rate" name="daily_rental_rate" 
+                       class="form-input {% if errors and errors.daily_rental_rate %}error{% endif %}" placeholder="e.g., 2500" step="0.01" min="0.01"
+                       value="{{ form_data.get('daily_rental_rate', vehicle['daily_rental_rate']) }}" required aria-describedby="rateHint {% if errors and errors.daily_rental_rate %}rateError{% endif %}">
+                <small id="rateHint" class="form-hint">Must be a positive number</small>
+                {% if errors and errors.daily_rental_rate %}
+                    <small id="rateError" class="form-hint form-hint-warning" role="alert">{{ errors.daily_rental_rate[0] }}</small>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="status" class="form-label">Status</label>
+            <select id="status" name="status" class="form-select {% if errors and errors.status %}error{% endif %}" aria-describedby="statusHint {% if errors and errors.status %}statusError{% endif %}">
+                {% for s in vehicle_statuses %}
+                    <option value="{{ s }}" {% if form_data.get('status', vehicle['status']) == s %}selected{% endif %}>{{ s|capitalize }}</option>
+                {% endfor %}
+            </select>
+            {% if errors and errors.status %}
+                <small id="statusError" class="form-hint form-hint-warning" role="alert">{{ errors.status[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">Update Vehicle</button>
+            <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

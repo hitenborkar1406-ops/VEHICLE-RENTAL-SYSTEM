@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Vehicle Rental System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p class="page-subtitle">Overview of your vehicle rental operations</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card stat-primary">
+        <div class="stat-icon">🚗</div>
+        <div class="stat-content">
+            <div class="stat-number">{{ vehicle_stats['total'] or 0 }}</div>
+            <div class="stat-label">Total Vehicles</div>
+        </div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+            <div class="stat-number">{{ vehicle_stats['available'] or 0 }}</div>
+            <div class="stat-label">Available</div>
+        </div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+            <div class="stat-number">{{ booking_stats['active'] or 0 }}</div>
+            <div class="stat-label">Active Bookings</div>
+        </div>
+    </div>
+    <div class="stat-card stat-info">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+            <div class="stat-number">₹{{ "%.2f"|format(revenue['total_revenue'] or 0) }}</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="dashboard-card">
+        <h2 class="card-title">Vehicle Overview</h2>
+        <div class="mini-stats">
+            <div class="mini-stat">
+                <span class="mini-dot dot-green"></span>
+                <span>Available: {{ vehicle_stats['available'] or 0 }}</span>
+            </div>
+            <div class="mini-stat">
+                <span class="mini-dot dot-blue"></span>
+                <span>Rented: {{ vehicle_stats['rented'] or 0 }}</span>
+            </div>
+            <div class="mini-stat">
+                <span class="mini-dot dot-orange"></span>
+                <span>Maintenance: {{ vehicle_stats['maintenance'] or 0 }}</span>
+            </div>
+        </div>
+        <div class="card-actions">
+            <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-outline">View All Vehicles</a>
+            <a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary">+ Add Vehicle</a>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2 class="card-title">Booking Summary</h2>
+        <div class="mini-stats">
+            <div class="mini-stat">
+                <span class="mini-dot dot-green"></span>
+                <span>Active: {{ booking_stats['active'] or 0 }}</span>
+            </div>
+            <div class="mini-stat">
+                <span class="mini-dot dot-red"></span>
+                <span>Cancelled: {{ booking_stats['cancelled'] or 0 }}</span>
+            </div>
+            <div class="mini-stat">
+                <span class="mini-dot dot-gray"></span>
+                <span>Completed: {{ booking_stats['completed'] or 0 }}</span>
+            </div>
+        </div>
+        <div class="card-actions">
+            <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-outline">View All Bookings</a>
+            <a href="{{ url_for('bookings.create_booking') }}" class="btn btn-primary">+ New Booking</a>
+        </div>
+    </div>
+</div>
+
+{% if recent_bookings %}
+<div class="dashboard-card full-width">
+    <h2 class="card-title">Recent Bookings</h2>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Vehicle</th>
+                    <th>Customer</th>
+                    <th>Dates</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in recent_bookings %}
+                <tr>
+                    <td><span class="booking-id">#{{ booking['id'] }}</span></td>
+                    <td>{{ booking['vehicle_name'] }} <span class="text-muted">({{ booking['registration_number'] }})</span></td>
+                    <td>{{ booking['customer_name'] }}</td>
+                    <td>{{ booking['start_date'] }} → {{ booking['end_date'] }}</td>
+                    <td class="amount">₹{{ "%.2f"|format(booking['total_amount']) }}</td>
+                    <td>
+                        <span class="status-badge status-{{ booking['status'] }}">
+                            {{ booking['status']|capitalize }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

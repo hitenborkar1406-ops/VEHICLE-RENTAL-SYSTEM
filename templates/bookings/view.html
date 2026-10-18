@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Booking #{{ booking['id'] }} — Vehicle Rental System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Booking #{{ booking['id'] }}</h1>
+    <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-outline">← Back to Bookings</a>
+</div>
+
+<div class="detail-card">
+    <div class="detail-header">
+        <span class="status-badge status-{{ booking['status'] }} status-lg">
+            {{ booking['status']|capitalize }}
+        </span>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-section">
+            <h3>Vehicle Information</h3>
+            <div class="detail-row">
+                <span class="detail-label">Vehicle:</span>
+                <span class="detail-value">{{ booking['vehicle_name'] }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Registration:</span>
+                <span class="detail-value"><code>{{ booking['registration_number'] }}</code></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{ booking['vehicle_type'] }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Daily Rate:</span>
+                <span class="detail-value amount">₹{{ "%.2f"|format(booking['daily_rental_rate']) }}</span>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3>Booking Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Customer:</span>
+                <span class="detail-value">{{ booking['customer_name'] }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Start Date:</span>
+                <span class="detail-value">{{ booking['start_date'] }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">End Date:</span>
+                <span class="detail-value">{{ booking['end_date'] }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Total Days:</span>
+                <span class="detail-value">{{ booking['total_days'] }} day(s)</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Total Amount:</span>
+                <span class="detail-value amount amount-lg">₹{{ "%.2f"|format(booking['total_amount']) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-meta">
+        <small>Booked on: {{ booking['created_at'] }}</small>
+        {% if booking['updated_at'] != booking['created_at'] %}
+            <small>Last updated: {{ booking['updated_at'] }}</small>
+        {% endif %}
+    </div>
+
+    {% if booking['status'] == 'active' %}
+    <div class="detail-actions">
+        <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking['id']) }}"
+              onsubmit="return confirm('Are you sure you want to cancel this booking?')">
+            <button type="submit" class="btn btn-danger">✖️ Cancel This Booking</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="detail-note">
+        <strong>Rental Calculation:</strong> {{ booking['total_days'] }} day(s) × ₹{{ "%.2f"|format(booking['daily_rental_rate']) }}/day = ₹{{ "%.2f"|format(booking['total_amount']) }}
+        <br><small>Using inclusive calculation: (end date − start date + 1) × daily rate</small>
+    </div>
+</div>
+{% endblock %}

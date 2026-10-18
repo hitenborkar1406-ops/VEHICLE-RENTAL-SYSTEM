@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Vehicles — Vehicle Rental System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Vehicle Management</h1>
+    <a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary">+ Add Vehicle</a>
+</div>
+
+<div class="filter-bar">
+    <form method="GET" action="{{ url_for('vehicles.list_vehicles') }}" class="filter-form">
+        <div class="filter-group">
+            <input type="text" name="search" placeholder="Search by name or registration..." 
+                   value="{{ search }}" class="form-input" id="vehicleSearch">
+        </div>
+        <div class="filter-group">
+            <select name="type" class="form-select" id="vehicleTypeFilter">
+                <option value="">All Types</option>
+                {% for t in vehicle_types %}
+                    <option value="{{ t }}" {% if selected_type == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="status" class="form-select" id="vehicleStatusFilter">
+                <option value="">All Statuses</option>
+                {% for s in vehicle_statuses %}
+                    <option value="{{ s }}" {% if selected_status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline">Filter</button>
+        {% if search or selected_type or selected_status %}
+            <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-ghost">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if vehicles %}
+<div class="table-responsive" role="region" aria-label="Vehicles table" tabindex="0">
+    <table class="data-table" id="vehicleTable">
+        <thead>
+            <tr>
+                <th scope="col">Registration</th>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Daily Rate</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vehicle in vehicles %}
+            <tr>
+                <td><code class="reg-number">{{ vehicle['registration_number'] }}</code></td>
+                <td class="vehicle-name">{{ vehicle['name'] }}</td>
+                <td><span class="type-badge">{{ vehicle['type'] }}</span></td>
+                <td class="amount">₹{{ "%.2f"|format(vehicle['daily_rental_rate']) }}</td>
+                <td>
+                    <span class="status-badge status-{{ vehicle['status'] }}">
+                        {{ vehicle['status']|capitalize }}
+                    </span>
+                </td>
+                <td class="actions-cell">
+                    {% if vehicle['status'] == 'available' %}
+                    <a href="{{ url_for('bookings.create_booking') }}?vehicle_id={{ vehicle['id'] }}" 
+                       class="btn btn-sm btn-primary" title="Book this vehicle" aria-label="Book {{ vehicle['name'] }}">📅 Book</a>
+                    {% endif %}
+                    <a href="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle['id']) }}" 
+                       class="btn btn-sm btn-outline" title="Edit" aria-label="Edit {{ vehicle['name'] }}">✏️ Edit</a>
+                    <form method="POST" action="{{ url_for('vehicles.delete_vehicle', vehicle_id=vehicle['id']) }}" 
+                          class="inline-form" onsubmit="return confirm('Are you sure you want to delete this vehicle? This cannot be undone.')">
+                        <button type="submit" class="btn btn-sm btn-danger" title="Delete" aria-label="Delete {{ vehicle['name'] }}">🗑️ Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Mobile Card View -->
+<div class="mobile-cards" role="list" aria-label="Vehicles list">
+    {% for vehicle in vehicles %}
+    <article class="mobile-card" role="listitem">
+        <div class="mobile-card-header">
+            <span class="vehicle-name">{{ vehicle['name'] }}</span>
+            <span class="type-badge">{{ vehicle['type'] }}</span>
+        </div>
+        <dl class="mobile-card-details">
+            <div class="detail-item">
+                <dt>Registration</dt>
+                <dd><code class="reg-number">{{ vehicle['registration_number'] }}</code></dd>
+            </div>
+            <div class="detail-item">
+                <dt>Daily Rate</dt>
+                <dd class="amount">₹{{ "%.2f"|format(vehicle['daily_rental_rate']) }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Status</dt>
+                <dd><span class="status-badge status-{{ vehicle['status'] }}">{{ vehicle['status']|capitalize }}</span></dd>
+            </div>
+        </dl>
+        <div class="mobile-card-actions">
+            {% if vehicle['status'] == 'available' %}
+            <a href="{{ url_for('bookings.create_booking') }}?vehicle_id={{ vehicle['id'] }}" 
+               class="btn btn-sm btn-primary">📅 Book Now</a>
+            {% endif %}
+            <a href="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle['id']) }}" class="btn btn-sm btn-outline">✏️ Edit</a>
+            <form method="POST" action="{{ url_for('vehicles.delete_vehicle', vehicle_id=vehicle['id']) }}" 
+                  class="inline-form" onsubmit="return confirm('Are you sure you want to delete this vehicle? This cannot be undone.')">
+                <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
+            </form>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<p class="result-count">Showing {{ vehicles|length }} vehicle(s)</p>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🚗</div>
+    <h3>No vehicles found</h3>
+    <p>{% if search or selected_type or selected_status %}Try adjusting your filters or {% endif %}<a href="{{ url_for('vehicles.add_vehicle') }}">add your first vehicle</a>.</p>
+</div>
+{% endif %}
+{% endblock %}
