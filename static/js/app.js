@@ -158,16 +158,9 @@
             return;
         }
         closeAllDropdowns();
-        const isOpen = !dropdown.hidden;
-        if (isOpen) {
-            show(dropdown);
-            btn.setAttribute('aria-expanded', 'true');
-            state.activeDropdown = dropdown;
-        } else {
-            hide(dropdown);
-            btn.setAttribute('aria-expanded', 'false');
-            state.activeDropdown = null;
-        }
+        show(dropdown);
+        btn.setAttribute('aria-expanded', 'true');
+        state.activeDropdown = dropdown;
     }
 
     // ==========================================================================
@@ -444,12 +437,6 @@
         initSidebarCollapse();
         initIcons();
         initEventListeners();
-
-        // Re-initialize icons after dynamic content
-        const observer = new MutationObserver(() => {
-            refreshIcons();
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
 
         // Expose globally for other scripts
         window.FleetFlow = {

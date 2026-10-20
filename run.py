@@ -9,6 +9,8 @@ Usage: python run.py
 from app import create_app
 
 app = create_app()
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
 
 if __name__ == '__main__':
     print("=" * 60)

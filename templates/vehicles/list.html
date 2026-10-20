@@ -66,6 +66,7 @@
             <span class="badge 
                 {% if vehicle.status == 'available' %}badge-success
                 {% elif vehicle.status == 'rented' %}badge-info
+                {% elif vehicle.status == 'maintenance' %}badge-warning
                 {% else %}badge-neutral{% endif %}">
                 {{ vehicle.status|title }}
             </span>

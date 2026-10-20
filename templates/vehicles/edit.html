@@ -58,6 +58,7 @@
                     <span class="badge 
                         {% if vehicle.status == 'available' %}badge-success
                         {% elif vehicle.status == 'rented' %}badge-info
+                        {% elif vehicle.status == 'maintenance' %}badge-warning
                         {% else %}badge-neutral{% endif %}">
                         {{ vehicle.status|title }}
                     </span>
@@ -105,7 +106,7 @@
                 <label class="form-label" for="name">Vehicle Name <span class="required" aria-hidden="true">*</span></label>
                 <input type="text" class="form-input" id="name" name="name" 
                        value="{{ form_data.name if form_data else vehicle.name }}" 
-                       placeholder="e.g., Toyota Camry" required aria-required="true" autocomplete="off">
+                       placeholder="e.g., BMW M5 CS" required aria-required="true" autocomplete="off">
             </div>
 
             <div class="form-row">

@@ -80,6 +80,7 @@
                         <span class="badge 
                             {% if booking.status == 'active' %}badge-success
                             {% elif booking.status == 'completed' %}badge-info
+                            {% elif booking.status == 'cancelled' %}badge-danger
                             {% else %}badge-neutral{% endif %}">
                             {{ booking.status|title }}
                         </span>

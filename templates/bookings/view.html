@@ -38,10 +38,11 @@
         <i data-lucide="{% if booking.status == 'active' %}calendar-check{% elif booking.status == 'completed' %}check-circle{% else %}x-circle{% endif %}"></i>
     </div>
 
-    <h1 class="confirmation-title" id="confirmTitle">Booking Confirmed</h1>
+    <h1 class="confirmation-title" id="confirmTitle">Booking {% if booking.status == 'active' %}Confirmed{% elif booking.status == 'completed' %}Completed{% elif booking.status == 'cancelled' %}Cancelled{% else %}Details{% endif %}</h1>
     <p class="confirmation-description">Booking <strong>#{{ booking.id }}</strong> is currently <span class="badge 
         {% if booking.status == 'active' %}badge-success
         {% elif booking.status == 'completed' %}badge-info
+        {% elif booking.status == 'cancelled' %}badge-danger
         {% else %}badge-neutral{% endif %}" style="font-size: var(--font-size-sm);">{{ booking.status|title }}</span></p>
 
     <!-- Details Panel -->

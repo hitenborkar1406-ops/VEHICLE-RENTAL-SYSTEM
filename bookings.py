@@ -209,7 +209,8 @@ def create_booking():
                 ).fetchall()
                 return render_template('bookings/create.html',
                                        vehicles=vehicles,
-                                       form_data=data)
+                                       form_data=data,
+                                       today=date.today().isoformat())
 
             db.execute(
                 """INSERT INTO bookings 
@@ -249,7 +250,8 @@ def create_booking():
     
     return render_template('bookings/create.html',
                            vehicles=vehicles,
-                           form_data=form_data)
+                           form_data=form_data,
+                           today=date.today().isoformat())
 
 
 @bookings_bp.route('/cancel/<int:booking_id>', methods=['POST'])
