@@ -1,99 +1,170 @@
 {% extends "base.html" %}
-{% block title %}Edit Vehicle — Vehicle Rental System{% endblock %}
+
+{% block page_title_header %}Edit Vehicle{% endblock %}
+
+{% block page_title %}Edit Vehicle{% endblock %}
+
+{% block page_description %}Update vehicle details and status{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <a href="{{ url_for('vehicles.list_vehicles') }}" class="breadcrumb-link">Vehicles</a>
+</li>
+<li class="breadcrumb-item">
+    <a href="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle.id) }}" class="breadcrumb-link">{{ vehicle.name }}</a>
+</li>
+<li class="breadcrumb-item">
+    <span class="breadcrumb-link" aria-current="page">Edit</span>
+</li>
+{% endblock %}
+
+{% block page_header_actions %}
+<form method="POST" action="{{ url_for('vehicles.delete_vehicle', vehicle_id=vehicle.id) }}" onsubmit="return confirmDelete(event)" style="display: inline;">
+    <button type="submit" class="btn btn-danger">
+        <i data-lucide="trash-2" aria-hidden="true"></i>
+        Delete
+    </button>
+</form>
+<a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-secondary">Back to List</a>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Edit Vehicle</h1>
-    <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-outline">← Back to Vehicles</a>
-</div>
+<div class="two-column-layout">
+    <!-- Summary Card (Left) -->
+    <aside class="summary-card" aria-labelledby="summaryTitle">
+        <header class="summary-header">
+            <h2 class="summary-title" id="summaryTitle">Current Details</h2>
+        </header>
+        <div class="summary-body">
+            <div class="summary-row">
+                <span class="summary-label">Vehicle Name</span>
+                <span class="summary-value" id="previewName">{{ vehicle.name }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Registration</span>
+                <span class="summary-value" id="previewReg">{{ vehicle.registration_number }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Type</span>
+                <span class="summary-value" id="previewType">{{ vehicle.type }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Daily Rate</span>
+                <span class="summary-value primary" id="previewRate">₹{{ "{:,.2f}".format(vehicle.daily_rental_rate) }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Current Status</span>
+                <span class="summary-value">
+                    <span class="badge 
+                        {% if vehicle.status == 'available' %}badge-success
+                        {% elif vehicle.status == 'rented' %}badge-info
+                        {% else %}badge-neutral{% endif %}">
+                        {{ vehicle.status|title }}
+                    </span>
+                </span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Created</span>
+                <span class="summary-value">{{ vehicle.created_at[:10] if vehicle.created_at else 'N/A' }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Last Updated</span>
+                <span class="summary-value">{{ vehicle.updated_at[:10] if vehicle.updated_at else 'Never' }}</span>
+            </div>
 
-{% if errors %}
-<div class="flash-messages">
-    <div class="flash-message flash-error" role="alert">
-        <span class="flash-icon">❌</span>
-        <span class="flash-text">
-            {% if errors is mapping %}
-                <ul style="margin: 0; padding-left: 1.5rem;">
-                {% for field, messages in errors.items() %}
-                    {% for msg in messages %}
-                    <li>{{ field|capitalize }}: {{ msg }}</li>
-                    {% endfor %}
-                {% endfor %}
-                </ul>
-            {% else %}
-                {{ errors }}
-            {% endif %}
-        </span>
-        <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-    </div>
-</div>
-{% endif %}
-
-<div class="form-card">
-    <form method="POST" action="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle['id']) }}" class="vehicle-form" id="editVehicleForm" novalidate>
-        <div class="form-group">
-            <label for="registration_number" class="form-label">Registration Number <span class="required">*</span></label>
-            <input type="text" id="registration_number" name="registration_number" 
-                   class="form-input {% if errors and errors.registration_number %}error{% endif %}" placeholder="e.g., MH-01-AB-1234"
-                   value="{{ form_data.get('registration_number', vehicle['registration_number']) }}" required aria-describedby="regHint {% if errors and errors.registration_number %}regError{% endif %}">
-            <small id="regHint" class="form-hint">Must be unique across all vehicles</small>
-            {% if errors and errors.registration_number %}
-                <small id="regError" class="form-hint form-hint-warning" role="alert">{{ errors.registration_number[0] }}</small>
-            {% endif %}
+            <div class="summary-inset">
+                <h3 class="inset-title">Rate Summary</h3>
+                <div class="inset-row">
+                    <span class="inset-label">Daily Rental Rate</span>
+                    <span class="inset-value">₹{{ "{:,.2f}".format(vehicle.daily_rental_rate) }}</span>
+                </div>
+                <div class="inset-row divider total">
+                    <span class="inset-label">Per Day Total</span>
+                    <span class="inset-value">₹{{ "{:,.2f}".format(vehicle.daily_rental_rate) }}</span>
+                </div>
+                <p class="inset-note">Rate is charged per calendar day. Minimum rental period is 1 day.</p>
+            </div>
         </div>
+    </aside>
 
-        <div class="form-group">
-            <label for="name" class="form-label">Vehicle Name <span class="required">*</span></label>
-            <input type="text" id="name" name="name" 
-                   class="form-input {% if errors and errors.name %}error{% endif %}" placeholder="e.g., Toyota Innova Crysta"
-                   value="{{ form_data.get('name', vehicle['name']) }}" required aria-describedby="nameHint {% if errors and errors.name %}nameError{% endif %}">
-            {% if errors and errors.name %}
-                <small id="nameError" class="form-hint form-hint-warning" role="alert">{{ errors.name[0] }}</small>
-            {% endif %}
-        </div>
-
-        <div class="form-row">
+    <!-- Form Card (Right) -->
+    <section class="form-card" aria-labelledby="formTitle">
+        <header class="form-card-header">
+            <h2 class="form-card-title" id="formTitle">Edit Vehicle</h2>
+        </header>
+        <form method="POST" class="form-card-body" novalidate>
             <div class="form-group">
-                <label for="type" class="form-label">Vehicle Type <span class="required">*</span></label>
-                <select id="type" name="type" class="form-select {% if errors and errors.type %}error{% endif %}" required aria-describedby="typeHint {% if errors and errors.type %}typeError{% endif %}">
-                    <option value="">Select type...</option>
-                    {% for t in vehicle_types %}
-                        <option value="{{ t }}" {% if form_data.get('type', vehicle['type']) == t %}selected{% endif %}>{{ t }}</option>
-                    {% endfor %}
-                </select>
-                {% if errors and errors.type %}
-                    <small id="typeError" class="form-hint form-hint-warning" role="alert">{{ errors.type[0] }}</small>
-                {% endif %}
+                <label class="form-label" for="registration_number">Registration Number <span class="required" aria-hidden="true">*</span></label>
+                <input type="text" class="form-input" id="registration_number" name="registration_number" 
+                       value="{{ form_data.registration_number if form_data else vehicle.registration_number }}" 
+                       placeholder="e.g., MH12AB1234" required aria-required="true"
+                       autocomplete="off" style="text-transform: uppercase;">
             </div>
 
             <div class="form-group">
-                <label for="daily_rental_rate" class="form-label">Daily Rental Rate (₹) <span class="required">*</span></label>
-                <input type="number" id="daily_rental_rate" name="daily_rental_rate" 
-                       class="form-input {% if errors and errors.daily_rental_rate %}error{% endif %}" placeholder="e.g., 2500" step="0.01" min="0.01"
-                       value="{{ form_data.get('daily_rental_rate', vehicle['daily_rental_rate']) }}" required aria-describedby="rateHint {% if errors and errors.daily_rental_rate %}rateError{% endif %}">
-                <small id="rateHint" class="form-hint">Must be a positive number</small>
-                {% if errors and errors.daily_rental_rate %}
-                    <small id="rateError" class="form-hint form-hint-warning" role="alert">{{ errors.daily_rental_rate[0] }}</small>
-                {% endif %}
+                <label class="form-label" for="name">Vehicle Name <span class="required" aria-hidden="true">*</span></label>
+                <input type="text" class="form-input" id="name" name="name" 
+                       value="{{ form_data.name if form_data else vehicle.name }}" 
+                       placeholder="e.g., Toyota Camry" required aria-required="true" autocomplete="off">
             </div>
-        </div>
 
-        <div class="form-group">
-            <label for="status" class="form-label">Status</label>
-            <select id="status" name="status" class="form-select {% if errors and errors.status %}error{% endif %}" aria-describedby="statusHint {% if errors and errors.status %}statusError{% endif %}">
-                {% for s in vehicle_statuses %}
-                    <option value="{{ s }}" {% if form_data.get('status', vehicle['status']) == s %}selected{% endif %}>{{ s|capitalize }}</option>
-                {% endfor %}
-            </select>
-            {% if errors and errors.status %}
-                <small id="statusError" class="form-hint form-hint-warning" role="alert">{{ errors.status[0] }}</small>
-            {% endif %}
-        </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="type">Vehicle Type <span class="required" aria-hidden="true">*</span></label>
+                    <select class="form-select form-input" id="type" name="type" required aria-required="true">
+                        {% for vtype in vehicle_types %}
+                        <option value="{{ vtype }}" {% if (form_data and form_data.type == vtype) or (not form_data and vehicle.type == vtype) %}selected{% endif %}>{{ vtype }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="status">Status</label>
+                    <select class="form-select form-input" id="status" name="status">
+                        {% for vstatus in vehicle_statuses %}
+                        <option value="{{ vstatus }}" {% if (form_data and form_data.get('status') == vstatus) or (not form_data and vehicle.status == vstatus) %}selected{% endif %}>{{ vstatus|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-lg">Update Vehicle</button>
-            <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-ghost">Cancel</a>
-        </div>
-    </form>
+            <div class="form-group">
+                <label class="form-label" for="daily_rental_rate">Daily Rental Rate (₹) <span class="required" aria-hidden="true">*</span></label>
+                <input type="number" class="form-input" id="daily_rental_rate" name="daily_rental_rate" 
+                       value="{{ form_data.daily_rental_rate if form_data else vehicle.daily_rental_rate }}" 
+                       placeholder="e.g., 2500.00" step="0.01" min="0.01" required aria-required="true">
+                <p class="form-help">Enter the daily rental rate in INR. Minimum: ₹0.01</p>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="save" aria-hidden="true"></i>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </section>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function confirmDelete(event) {
+    const confirmed = confirm('Are you sure you want to delete this vehicle? This action cannot be undone. Vehicles with booking history cannot be deleted.');
+    if (!confirmed) {
+        event.preventDefault();
+    }
+    return confirmed;
+}
+
+// Auto-uppercase registration number
+document.addEventListener('DOMContentLoaded', function() {
+    const regInput = document.getElementById('registration_number');
+    if (regInput) {
+        regInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+});
+</script>
 {% endblock %}

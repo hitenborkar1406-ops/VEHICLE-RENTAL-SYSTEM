@@ -1,87 +1,172 @@
 {% extends "base.html" %}
-{% block title %}Add Vehicle — Vehicle Rental System{% endblock %}
+
+{% block page_title_header %}Add Vehicle{% endblock %}
+
+{% block page_title %}Add Vehicle{% endblock %}
+
+{% block page_description %}Register a new vehicle in your fleet{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <a href="{{ url_for('vehicles.list_vehicles') }}" class="breadcrumb-link">Vehicles</a>
+</li>
+<li class="breadcrumb-item">
+    <span class="breadcrumb-link" aria-current="page">Add Vehicle</span>
+</li>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Add New Vehicle</h1>
-    <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-outline">← Back to Vehicles</a>
-</div>
+<div class="two-column-layout">
+    <!-- Summary Card (Left) -->
+    <aside class="summary-card" aria-labelledby="summaryTitle">
+        <header class="summary-header">
+            <h2 class="summary-title" id="summaryTitle">Vehicle Details Preview</h2>
+        </header>
+        <div class="summary-body">
+            <div class="summary-row">
+                <span class="summary-label">Vehicle Name</span>
+                <span class="summary-value" id="previewName">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Registration</span>
+                <span class="summary-value" id="previewReg">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Type</span>
+                <span class="summary-value" id="previewType">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Daily Rate</span>
+                <span class="summary-value primary" id="previewRate">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Status</span>
+                <span class="summary-value" id="previewStatus">Available</span>
+            </div>
 
-{% if errors %}
-<div class="flash-messages">
-    <div class="flash-message flash-error" role="alert">
-        <span class="flash-icon">❌</span>
-        <span class="flash-text">
-            {% if errors is mapping %}
-                <ul style="margin: 0; padding-left: 1.5rem;">
-                {% for field, messages in errors.items() %}
-                    {% for msg in messages %}
-                    <li>{{ field|capitalize }}: {{ msg }}</li>
-                    {% endfor %}
-                {% endfor %}
-                </ul>
-            {% else %}
-                {{ errors }}
-            {% endif %}
-        </span>
-        <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-    </div>
-</div>
-{% endif %}
-
-<div class="form-card">
-    <form method="POST" action="{{ url_for('vehicles.add_vehicle') }}" class="vehicle-form" id="addVehicleForm" novalidate>
-        <div class="form-group">
-            <label for="registration_number" class="form-label">Registration Number <span class="required">*</span></label>
-            <input type="text" id="registration_number" name="registration_number" 
-                   class="form-input {% if errors and errors.registration_number %}error{% endif %}" placeholder="e.g., MH-01-AB-1234"
-                   value="{{ form_data.get('registration_number', '') }}" required aria-describedby="regHint {% if errors and errors.registration_number %}regError{% endif %}">
-            <small id="regHint" class="form-hint">Must be unique across all vehicles</small>
-            {% if errors and errors.registration_number %}
-                <small id="regError" class="form-hint form-hint-warning" role="alert">{{ errors.registration_number[0] }}</small>
-            {% endif %}
+            <div class="summary-inset">
+                <h3 class="inset-title">Rate Summary</h3>
+                <div class="inset-row">
+                    <span class="inset-label">Daily Rental Rate</span>
+                    <span class="inset-value" id="insetDailyRate">₹0.00</span>
+                </div>
+                <div class="inset-row divider total">
+                    <span class="inset-label">Per Day Total</span>
+                    <span class="inset-value" id="insetTotal">₹0.00</span>
+                </div>
+                <p class="inset-note">Rate is charged per calendar day. Minimum rental period is 1 day.</p>
+            </div>
         </div>
+    </aside>
 
-        <div class="form-group">
-            <label for="name" class="form-label">Vehicle Name <span class="required">*</span></label>
-            <input type="text" id="name" name="name" 
-                   class="form-input {% if errors and errors.name %}error{% endif %}" placeholder="e.g., Toyota Innova Crysta"
-                   value="{{ form_data.get('name', '') }}" required aria-describedby="nameHint {% if errors and errors.name %}nameError{% endif %}">
-            {% if errors and errors.name %}
-                <small id="nameError" class="form-hint form-hint-warning" role="alert">{{ errors.name[0] }}</small>
-            {% endif %}
-        </div>
-
-        <div class="form-row">
+    <!-- Form Card (Right) -->
+    <section class="form-card" aria-labelledby="formTitle">
+        <header class="form-card-header">
+            <h2 class="form-card-title" id="formTitle">Vehicle Information</h2>
+        </header>
+        <form method="POST" class="form-card-body" novalidate>
             <div class="form-group">
-                <label for="type" class="form-label">Vehicle Type <span class="required">*</span></label>
-                <select id="type" name="type" class="form-select {% if errors and errors.type %}error{% endif %}" required aria-describedby="typeHint {% if errors and errors.type %}typeError{% endif %}">
-                    <option value="">Select type...</option>
-                    {% for t in vehicle_types %}
-                        <option value="{{ t }}" {% if form_data.get('type', '') == t %}selected{% endif %}>{{ t }}</option>
-                    {% endfor %}
-                </select>
-                {% if errors and errors.type %}
-                    <small id="typeError" class="form-hint form-hint-warning" role="alert">{{ errors.type[0] }}</small>
-                {% endif %}
+                <label class="form-label" for="registration_number">Registration Number <span class="required" aria-hidden="true">*</span></label>
+                <input type="text" class="form-input" id="registration_number" name="registration_number" 
+                       value="{{ form_data.registration_number if form_data else '' }}" 
+                       placeholder="e.g., MH12AB1234" required aria-required="true"
+                       autocomplete="off" style="text-transform: uppercase;">
             </div>
 
             <div class="form-group">
-                <label for="daily_rental_rate" class="form-label">Daily Rental Rate (₹) <span class="required">*</span></label>
-                <input type="number" id="daily_rental_rate" name="daily_rental_rate" 
-                       class="form-input {% if errors and errors.daily_rental_rate %}error{% endif %}" placeholder="e.g., 2500" step="0.01" min="0.01"
-                       value="{{ form_data.get('daily_rental_rate', '') }}" required aria-describedby="rateHint {% if errors and errors.daily_rental_rate %}rateError{% endif %}">
-                <small id="rateHint" class="form-hint">Must be a positive number</small>
-                {% if errors and errors.daily_rental_rate %}
-                    <small id="rateError" class="form-hint form-hint-warning" role="alert">{{ errors.daily_rental_rate[0] }}</small>
-                {% endif %}
+                <label class="form-label" for="name">Vehicle Name <span class="required" aria-hidden="true">*</span></label>
+                <input type="text" class="form-input" id="name" name="name" 
+                       value="{{ form_data.name if form_data else '' }}" 
+                       placeholder="e.g., Toyota Camry" required aria-required="true" autocomplete="off">
             </div>
-        </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-lg">Add Vehicle</button>
-            <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-ghost">Cancel</a>
-        </div>
-    </form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="type">Vehicle Type <span class="required" aria-hidden="true">*</span></label>
+                    <select class="form-select form-input" id="type" name="type" required aria-required="true">
+                        <option value="">Select Type</option>
+                        {% for vtype in vehicle_types %}
+                        <option value="{{ vtype }}" {% if form_data and form_data.type == vtype %}selected{% endif %}>{{ vtype }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="status">Initial Status</label>
+                    <select class="form-select form-input" id="status" name="status">
+                        <option value="available" {% if not form_data or form_data.get('status', 'available') == 'available' %}selected{% endif %}>Available</option>
+                        <option value="maintenance" {% if form_data and form_data.get('status') == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="daily_rental_rate">Daily Rental Rate (₹) <span class="required" aria-hidden="true">*</span></label>
+                <input type="number" class="form-input" id="daily_rental_rate" name="daily_rental_rate" 
+                       value="{{ form_data.daily_rental_rate if form_data else '' }}" 
+                       placeholder="e.g., 2500.00" step="0.01" min="0.01" required aria-required="true">
+                <p class="form-help">Enter the daily rental rate in INR. Minimum: ₹0.01</p>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="save" aria-hidden="true"></i>
+                    Add Vehicle
+                </button>
+            </div>
+        </form>
+    </section>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const fields = {
+        name: document.getElementById('name'),
+        registration_number: document.getElementById('registration_number'),
+        type: document.getElementById('type'),
+        daily_rental_rate: document.getElementById('daily_rental_rate'),
+        status: document.getElementById('status')
+    };
+
+    const previews = {
+        name: document.getElementById('previewName'),
+        reg: document.getElementById('previewReg'),
+        type: document.getElementById('previewType'),
+        rate: document.getElementById('previewRate'),
+        status: document.getElementById('previewStatus'),
+        insetDailyRate: document.getElementById('insetDailyRate'),
+        insetTotal: document.getElementById('insetTotal')
+    };
+
+    function updatePreview() {
+        previews.name.textContent = fields.name.value || '—';
+        previews.reg.textContent = fields.registration_number.value.toUpperCase() || '—';
+        previews.type.textContent = fields.type.value || '—';
+        previews.status.textContent = fields.status.value.charAt(0).toUpperCase() + fields.status.value.slice(1);
+
+        const rate = parseFloat(fields.daily_rental_rate.value) || 0;
+        const formatted = '₹' + rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        previews.rate.textContent = formatted;
+        previews.insetDailyRate.textContent = formatted;
+        previews.insetTotal.textContent = formatted;
+    }
+
+    Object.values(fields).forEach(field => {
+        field.addEventListener('input', updatePreview);
+        field.addEventListener('change', updatePreview);
+    });
+
+    // Auto-uppercase registration number
+    fields.registration_number.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        updatePreview();
+    });
+
+    // Initial preview
+    updatePreview();
+});
+</script>
 {% endblock %}

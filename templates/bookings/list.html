@@ -1,137 +1,148 @@
 {% extends "base.html" %}
-{% block title %}Bookings — Vehicle Rental System{% endblock %}
+
+{% block page_title_header %}Bookings{% endblock %}
+
+{% block page_title %}Bookings{% endblock %}
+
+{% block page_description %}Manage rental bookings - view, create, and track reservations{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <span class="breadcrumb-link" aria-current="page">Bookings</span>
+</li>
+{% endblock %}
+
+{% block page_header_actions %}
+<a href="{{ url_for('bookings.create_booking') }}" class="btn btn-primary">
+    <i data-lucide="plus" aria-hidden="true"></i>
+    New Booking
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Booking Management</h1>
-    <a href="{{ url_for('bookings.create_booking') }}" class="btn btn-primary">+ New Booking</a>
-</div>
-
-<div class="filter-bar">
-    <form method="GET" action="{{ url_for('bookings.list_bookings') }}" class="filter-form">
+<!-- Filter Panel -->
+<div class="filter-panel" role="search" aria-label="Booking filters">
+    <div class="filter-grid">
         <div class="filter-group">
-            <input type="text" name="search" placeholder="Search by customer or vehicle..." 
-                   value="{{ search }}" class="form-input" id="bookingSearch">
+            <label class="filter-label" for="search">Search</label>
+            <div class="search-container">
+                <i data-lucide="search" class="search-icon" aria-hidden="true"></i>
+                <input type="search" class="form-input search-input" id="search" placeholder="Customer, vehicle, reg number..." value="{{ search }}" aria-label="Search bookings">
+            </div>
         </div>
         <div class="filter-group">
-            <select name="status" class="form-select" id="bookingStatusFilter">
-                <option value="">All Statuses</option>
+            <label class="filter-label" for="statusFilter">Status</label>
+            <select class="form-select form-input" id="statusFilter" aria-label="Filter by booking status">
+                <option value="">All Status</option>
                 <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
-                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
                 <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-outline">Filter</button>
-        {% if search or status_filter %}
-            <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-ghost">Clear</a>
-        {% endif %}
-    </form>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-footer">
+        <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-secondary btn-sm">Reset Filters</a>
+        <span class="filter-results">{{ bookings|length }} booking{{ 's' if bookings|length != 1 else '' }} found</span>
+    </div>
 </div>
 
+<!-- Bookings Table -->
 {% if bookings %}
-<div class="table-responsive" role="region" aria-label="Bookings table" tabindex="0">
-    <table class="data-table" id="bookingTable">
-        <thead>
-            <tr>
-                <th scope="col">Booking ID</th>
-                <th scope="col">Vehicle</th>
-                <th scope="col">Customer</th>
-                <th scope="col">Start Date</th>
-                <th scope="col">End Date</th>
-                <th scope="col">Days</th>
-                <th scope="col">Amount</th>
-                <th scope="col">Status</th>
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for booking in bookings %}
-            <tr>
-                <td><span class="booking-id">#{{ booking['id'] }}</span></td>
-                <td>
-                    {{ booking['vehicle_name'] }}
-                    <br><small class="text-muted">{{ booking['registration_number'] }} · {{ booking['vehicle_type'] }}</small>
-                </td>
-                <td>{{ booking['customer_name'] }}</td>
-                <td>{{ booking['start_date'] }}</td>
-                <td>{{ booking['end_date'] }}</td>
-                <td>{{ booking['total_days'] }}</td>
-                <td class="amount">₹{{ "%.2f"|format(booking['total_amount']) }}</td>
-                <td>
-                    <span class="status-badge status-{{ booking['status'] }}">
-                        {{ booking['status']|capitalize }}
-                    </span>
-                </td>
-                <td class="actions-cell">
-                    <a href="{{ url_for('bookings.view_booking', booking_id=booking['id']) }}" 
-                       class="btn btn-sm btn-outline" title="View Details" aria-label="View booking #{{ booking['id'] }} details">👁️ View</a>
-                    {% if booking['status'] == 'active' %}
-                    <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking['id']) }}" 
-                          class="inline-form"
-                          onsubmit="return confirm('Are you sure you want to cancel this booking? The reserved dates will be released.')">
-                        <button type="submit" class="btn btn-sm btn-danger" title="Cancel Booking" aria-label="Cancel booking #{{ booking['id'] }}">✖️ Cancel</button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="card" style="overflow: hidden;">
+    <div class="table-container" style="border: none; border-radius: 0; background: transparent;">
+        <table class="table" role="grid" aria-label="Bookings list">
+            <thead>
+                <tr>
+                    <th scope="col">Booking ID</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Vehicle</th>
+                    <th scope="col">Dates</th>
+                    <th scope="col">Days</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td><code style="font-size: var(--font-size-xs);">#{{ booking.id }}</code></td>
+                    <td>{{ booking.customer_name }}</td>
+                    <td>
+                        <strong>{{ booking.vehicle_name }}</strong><br>
+                        <small style="color: var(--color-text-muted);">{{ booking.registration_number }} • {{ booking.vehicle_type }}</small>
+                    </td>
+                    <td>{{ booking.start_date }} – {{ booking.end_date }}</td>
+                    <td>{{ booking.total_days }}</td>
+                    <td><strong>₹{{ "{:,.2f}".format(booking.total_amount) }}</strong></td>
+                    <td>
+                        <span class="badge 
+                            {% if booking.status == 'active' %}badge-success
+                            {% elif booking.status == 'completed' %}badge-info
+                            {% else %}badge-neutral{% endif %}">
+                            {{ booking.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: var(--space-2);">
+                            <a href="{{ url_for('bookings.view_booking', booking_id=booking.id) }}" 
+                               class="btn btn-ghost btn-sm" aria-label="View booking #{{ booking.id }}">
+                                <i data-lucide="eye" aria-hidden="true"></i>
+                            </a>
+                            {% if booking.status == 'active' %}
+                            <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking.id) }}" 
+                                  onsubmit="return confirm('Cancel this booking? This will release the reserved dates for other customers.')" style="display: inline;">
+                                <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" aria-label="Cancel booking #{{ booking.id }}">
+                                    <i data-lucide="x-circle" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-
-<!-- Mobile Card View -->
-<div class="mobile-cards" role="list" aria-label="Bookings list">
-    {% for booking in bookings %}
-    <article class="mobile-card" role="listitem">
-        <div class="mobile-card-header">
-            <div>
-                <span class="booking-id">#{{ booking['id'] }}</span>
-                <br><small class="text-muted">{{ booking['vehicle_name'] }} ({{ booking['registration_number'] }})</small>
-            </div>
-            <span class="status-badge status-{{ booking['status'] }}">{{ booking['status']|capitalize }}</span>
-        </div>
-        <dl class="mobile-card-details">
-            <div class="detail-item">
-                <dt>Customer</dt>
-                <dd>{{ booking['customer_name'] }}</dd>
-            </div>
-            <div class="detail-item">
-                <dt>Dates</dt>
-                <dd>{{ booking['start_date'] }} → {{ booking['end_date'] }}</dd>
-            </div>
-            <div class="detail-item">
-                <dt>Days</dt>
-                <dd>{{ booking['total_days'] }} day(s)</dd>
-            </div>
-            <div class="detail-item">
-                <dt>Amount</dt>
-                <dd class="amount amount-lg">₹{{ "%.2f"|format(booking['total_amount']) }}</dd>
-            </div>
-            <div class="detail-item">
-                <dt>Vehicle</dt>
-                <dd>{{ booking['vehicle_type'] }}</dd>
-            </div>
-        </dl>
-        <div class="mobile-card-actions">
-            <a href="{{ url_for('bookings.view_booking', booking_id=booking['id']) }}" class="btn btn-sm btn-outline">👁️ View Details</a>
-            {% if booking['status'] == 'active' %}
-            <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking['id']) }}" 
-                  class="inline-form"
-                  onsubmit="return confirm('Are you sure you want to cancel this booking? The reserved dates will be released.')">
-                <button type="submit" class="btn btn-sm btn-danger">✖️ Cancel</button>
-            </form>
-            {% endif %}
-        </div>
-    </article>
-    {% endfor %}
-</div>
-
-<p class="result-count">Showing {{ bookings|length }} booking(s)</p>
 {% else %}
-<div class="empty-state">
-    <div class="empty-icon">📋</div>
-    <h3>No bookings found</h3>
-    <p>{% if search or status_filter %}Try adjusting your filters or {% endif %}<a href="{{ url_for('bookings.create_booking') }}">create your first booking</a>.</p>
+<div class="card">
+    <div class="card-body" style="text-align: center; padding: var(--space-16);">
+        <div class="empty-state">
+            <i data-lucide="calendar" class="empty-state-icon"></i>
+            <h3 class="empty-state-title">No Bookings Found</h3>
+            <p class="empty-state-message">{% if search or status_filter %}Try adjusting your filters or {% endif %}create your first booking</p>
+            <a href="{{ url_for('bookings.create_booking') }}" class="btn btn-primary">
+                <i data-lucide="plus" aria-hidden="true"></i>
+                Create Booking
+            </a>
+        </div>
+    </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function applyFilters() {
+        const params = new URLSearchParams();
+        if (searchInput.value) params.set('search', searchInput.value);
+        if (statusFilter.value) params.set('status', statusFilter.value);
+        window.location.search = params.toString();
+    }
+
+    let searchDebounce;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(applyFilters, 300);
+    });
+
+    statusFilter.addEventListener('change', applyFilters);
+});
+</script>
 {% endblock %}

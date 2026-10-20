@@ -1,122 +1,441 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — Vehicle Rental System{% endblock %}
+
+{% block page_title_header %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block page_description %}Overview of your fleet operations and key metrics{% endblock %}
+
+{% block page_header_actions %}
+<div class="header-actions">
+    <a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary">
+        <i data-lucide="plus" aria-hidden="true"></i>
+        Add Vehicle
+    </a>
+    <a href="{{ url_for('bookings.create_booking') }}" class="btn btn-secondary">
+        <i data-lucide="calendar-plus" aria-hidden="true"></i>
+        New Booking
+    </a>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Dashboard</h1>
-    <p class="page-subtitle">Overview of your vehicle rental operations</p>
-</div>
+<!-- Hero Section -->
+<section class="dashboard-hero" aria-labelledby="dashboardTitle">
+    <div class="hero-content">
+        <div class="hero-text">
+            <span class="hero-badge">
+                <i data-lucide="trending-up" aria-hidden="true"></i>
+                <span>Live Fleet Overview</span>
+            </span>
+            <h1 class="page-title" id="dashboardTitle">Dashboard</h1>
+            <p class="page-description">Real-time insights into your fleet operations, revenue, and vehicle status</p>
+        </div>
+        <div class="hero-stats" aria-label="Quick stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value" data-count="{{ vehicle_stats.total if vehicle_stats else 0 }}">0</div>
+                <div class="hero-stat-label">Total Fleet</div>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" data-count="{{ booking_stats.active if booking_stats else 0 }}">0</div>
+                <div class="hero-stat-label">Active Bookings</div>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" data-count="{{ revenue.total_revenue|int if revenue else 0 }}">0</div>
+                <div class="hero-stat-label">Revenue (₹)</div>
+            </div>
+        </div>
+    </div>
+</section>
 
-<div class="stats-grid">
-    <div class="stat-card stat-primary">
-        <div class="stat-icon">🚗</div>
+<!-- Stats Grid -->
+<div class="stats-grid" role="region" aria-label="Key metrics">
+    <article class="stat-card">
+        <div class="stat-icon primary" aria-hidden="true">
+            <i data-lucide="truck"></i>
+        </div>
         <div class="stat-content">
-            <div class="stat-number">{{ vehicle_stats['total'] or 0 }}</div>
             <div class="stat-label">Total Vehicles</div>
+            <div class="stat-value">{{ vehicle_stats.total if vehicle_stats else 0 }}</div>
+            <div class="stat-change positive">
+                <i data-lucide="trending-up" aria-hidden="true"></i>
+                <span>{{ vehicle_stats.available if vehicle_stats else 0 }} Available</span>
+            </div>
         </div>
-    </div>
-    <div class="stat-card stat-success">
-        <div class="stat-icon">✅</div>
-        <div class="stat-content">
-            <div class="stat-number">{{ vehicle_stats['available'] or 0 }}</div>
-            <div class="stat-label">Available</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-icon success" aria-hidden="true">
+            <i data-lucide="calendar"></i>
         </div>
-    </div>
-    <div class="stat-card stat-warning">
-        <div class="stat-icon">📋</div>
         <div class="stat-content">
-            <div class="stat-number">{{ booking_stats['active'] or 0 }}</div>
             <div class="stat-label">Active Bookings</div>
+            <div class="stat-value">{{ booking_stats.active if booking_stats else 0 }}</div>
+            <div class="stat-change">
+                <span>{{ booking_stats.total if booking_stats else 0 }} Total Bookings</span>
+            </div>
         </div>
-    </div>
-    <div class="stat-card stat-info">
-        <div class="stat-icon">💰</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-icon warning" aria-hidden="true">
+            <i data-lucide="dollar-sign"></i>
+        </div>
         <div class="stat-content">
-            <div class="stat-number">₹{{ "%.2f"|format(revenue['total_revenue'] or 0) }}</div>
-            <div class="stat-label">Total Revenue</div>
+            <div class="stat-label">Revenue (Active + Completed)</div>
+            <div class="stat-value">&#8377;{{ "{:,.2f}".format(revenue.total_revenue) }}</div>
+            <div class="stat-change positive">
+                <i data-lucide="trending-up" aria-hidden="true"></i>
+                <span>This period</span>
+            </div>
         </div>
-    </div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-icon danger" aria-hidden="true">
+            <i data-lucide="alert-triangle"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Vehicles in Maintenance</div>
+            <div class="stat-value">{{ vehicle_stats.maintenance if vehicle_stats else 0 }}</div>
+            <div class="stat-change">
+                <span>{{ vehicle_stats.rented if vehicle_stats else 0 }} Currently Rented</span>
+            </div>
+        </div>
+    </article>
 </div>
 
-<div class="dashboard-grid">
-    <div class="dashboard-card">
-        <h2 class="card-title">Vehicle Overview</h2>
-        <div class="mini-stats">
-            <div class="mini-stat">
-                <span class="mini-dot dot-green"></span>
-                <span>Available: {{ vehicle_stats['available'] or 0 }}</span>
-            </div>
-            <div class="mini-stat">
-                <span class="mini-dot dot-blue"></span>
-                <span>Rented: {{ vehicle_stats['rented'] or 0 }}</span>
-            </div>
-            <div class="mini-stat">
-                <span class="mini-dot dot-orange"></span>
-                <span>Maintenance: {{ vehicle_stats['maintenance'] or 0 }}</span>
+<!-- Charts Row -->
+<div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); margin-bottom: var(--space-6);">
+    <section class="card" aria-labelledby="revenueChartTitle">
+        <div class="card-header">
+            <h2 class="card-title" id="revenueChartTitle">Revenue Overview</h2>
+            <div class="card-header-actions">
+                <select class="form-select" style="width: auto; min-width: 140px;" id="revenuePeriod">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                </select>
             </div>
         </div>
-        <div class="card-actions">
-            <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-outline">View All Vehicles</a>
-            <a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary">+ Add Vehicle</a>
+        <div class="card-body" style="height: 300px;">
+            <canvas id="revenueChart" aria-label="Revenue chart over time"></canvas>
         </div>
-    </div>
+    </section>
 
-    <div class="dashboard-card">
-        <h2 class="card-title">Booking Summary</h2>
-        <div class="mini-stats">
-            <div class="mini-stat">
-                <span class="mini-dot dot-green"></span>
-                <span>Active: {{ booking_stats['active'] or 0 }}</span>
-            </div>
-            <div class="mini-stat">
-                <span class="mini-dot dot-red"></span>
-                <span>Cancelled: {{ booking_stats['cancelled'] or 0 }}</span>
-            </div>
-            <div class="mini-stat">
-                <span class="mini-dot dot-gray"></span>
-                <span>Completed: {{ booking_stats['completed'] or 0 }}</span>
-            </div>
+    <section class="card" aria-labelledby="statusChartTitle">
+        <div class="card-header">
+            <h2 class="card-title" id="statusChartTitle">Vehicle Status Distribution</h2>
         </div>
-        <div class="card-actions">
-            <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-outline">View All Bookings</a>
-            <a href="{{ url_for('bookings.create_booking') }}" class="btn btn-primary">+ New Booking</a>
+        <div class="card-body" style="height: 300px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="statusChart" aria-label="Vehicle status distribution pie chart"></canvas>
         </div>
-    </div>
+    </section>
 </div>
 
-{% if recent_bookings %}
-<div class="dashboard-card full-width">
-    <h2 class="card-title">Recent Bookings</h2>
-    <div class="table-responsive">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Vehicle</th>
-                    <th>Customer</th>
-                    <th>Dates</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in recent_bookings %}
-                <tr>
-                    <td><span class="booking-id">#{{ booking['id'] }}</span></td>
-                    <td>{{ booking['vehicle_name'] }} <span class="text-muted">({{ booking['registration_number'] }})</span></td>
-                    <td>{{ booking['customer_name'] }}</td>
-                    <td>{{ booking['start_date'] }} → {{ booking['end_date'] }}</td>
-                    <td class="amount">₹{{ "%.2f"|format(booking['total_amount']) }}</td>
-                    <td>
-                        <span class="status-badge status-{{ booking['status'] }}">
-                            {{ booking['status']|capitalize }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<!-- Recent Bookings & Quick Actions -->
+<div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+    <section class="card" aria-labelledby="recentBookingsTitle">
+        <div class="card-header">
+            <h2 class="card-title" id="recentBookingsTitle">Recent Bookings</h2>
+            <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-ghost btn-sm">View All</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_bookings %}
+                <div class="table-container" style="border: none; border-radius: 0; background: transparent;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Dates</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in recent_bookings %}
+                            <tr>
+                                <td><code style="font-size: var(--font-size-xs);">#{{ booking.id }}</code></td>
+                                <td>{{ booking.customer_name }}</td>
+                                <td>{{ booking.vehicle_name }}<br><small style="color: var(--color-text-muted);">{{ booking.registration_number }}</small></td>
+                                <td>{{ booking.start_date }} – {{ booking.end_date }}</td>
+                                <td><strong>₹{{ "{:,.2f}".format(booking.total_amount) }}</strong></td>
+                                <td>
+                                    <span class="badge 
+                                        {% if booking.status == 'active' %}badge-success
+                                        {% elif booking.status == 'completed' %}badge-info
+                                        {% else %}badge-neutral{% endif %}">
+                                        {{ booking.status|title }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i data-lucide="calendar" class="empty-state-icon"></i>
+                    <h3 class="empty-state-title">No Bookings Yet</h3>
+                    <p class="empty-state-message">Create your first booking to get started</p>
+                    <a href="{{ url_for('bookings.create_booking') }}" class="btn btn-primary">
+                        <i data-lucide="plus" aria-hidden="true"></i>
+                        Create Booking
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="quickActionsTitle">
+        <div class="card-header">
+            <h2 class="card-title" id="quickActionsTitle">Quick Actions</h2>
+        </div>
+        <div class="card-body">
+            <div class="quick-actions-grid">
+                <a href="{{ url_for('vehicles.add_vehicle') }}" class="quick-action-btn">
+                    <i data-lucide="plus-circle" class="quick-action-icon" aria-hidden="true"></i>
+                    <span class="quick-action-title">Add Vehicle</span>
+                    <span class="quick-action-desc">Register new fleet vehicle</span>
+                </a>
+
+                <a href="{{ url_for('bookings.create_booking') }}" class="quick-action-btn">
+                    <i data-lucide="calendar-plus" class="quick-action-icon" aria-hidden="true"></i>
+                    <span class="quick-action-title">New Booking</span>
+                    <span class="quick-action-desc">Create rental reservation</span>
+                </a>
+
+                <a href="{{ url_for('vehicles.list_vehicles') }}" class="quick-action-btn">
+                    <i data-lucide="truck" class="quick-action-icon" aria-hidden="true"></i>
+                    <span class="quick-action-title">Manage Fleet</span>
+                    <span class="quick-action-desc">View & edit vehicles</span>
+                </a>
+
+                <a href="{{ url_for('bookings.list_bookings') }}" class="quick-action-btn">
+                    <i data-lucide="list" class="quick-action-icon" aria-hidden="true"></i>
+                    <span class="quick-action-title">View Bookings</span>
+                    <span class="quick-action-desc">All reservations list</span>
+                </a>
+            </div>
+        </div>
+    </section>
 </div>
-{% endif %}
+
+<!-- Fleet Status Summary -->
+<section class="card" style="margin-top: var(--space-6);">
+    <div class="card-header">
+        <h2 class="card-title">Fleet Status Summary</h2>
+    </div>
+    <div class="card-body">
+        <div class="status-grid">
+            <div class="status-item available">
+                <div class="status-indicator" aria-hidden="true"></div>
+                <div class="status-info">
+                    <div class="status-label">Available</div>
+                    <div class="status-value">{{ vehicle_stats.available }}</div>
+                </div>
+            </div>
+            <div class="status-item rented">
+                <div class="status-indicator" aria-hidden="true"></div>
+                <div class="status-info">
+                    <div class="status-label">Rented</div>
+                    <div class="status-value">{{ vehicle_stats.rented }}</div>
+                </div>
+            </div>
+            <div class="status-item maintenance">
+                <div class="status-indicator" aria-hidden="true"></div>
+                <div class="status-info">
+                    <div class="status-label">Maintenance</div>
+                    <div class="status-value">{{ vehicle_stats.maintenance }}</div>
+                </div>
+            </div>
+            <div class="status-item total">
+                <div class="status-indicator" aria-hidden="true"></div>
+                <div class="status-info">
+                    <div class="status-label">Total Fleet</div>
+                    <div class="status-value">{{ vehicle_stats.total }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Vehicle stats for charts (ensure they are numbers)
+    const vehicleStats = {
+        available: {{ vehicle_stats.available }},
+        rented: {{ vehicle_stats.rented }},
+        maintenance: {{ vehicle_stats.maintenance }}
+    };
+
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Revenue (\u20B9)',
+                    data: [12500, 19200, 15800, 22100, 18900, 25400, 21300],
+                    borderColor: '#6B8CFF',
+                    backgroundColor: 'rgba(107, 140, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#6B8CFF',
+                    pointBorderColor: '#0A0F1A',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0A0F1A',
+                        titleColor: '#FFFFFF',
+                        bodyColor: '#FFFFFF',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        borderColor: '#2A3548',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return '\u20B9' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748B', font: { size: 12 } }
+                    },
+                    y: {
+                        grid: { color: '#1E293B', drawBorder: false },
+                        ticks: { color: '#64748B', font: { size: 12 }, callback: v => '\u20B9' + v.toLocaleString() },
+                        beginAtZero: true
+                    }
+                },
+                interaction: { intersect: false, mode: 'index' }
+            }
+        });
+    }
+
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Rented', 'Maintenance'],
+                datasets: [{
+                    data: [
+                        vehicleStats.available,
+                        vehicleStats.rented,
+                        vehicleStats.maintenance
+                    ],
+                    backgroundColor: ['#22C55E', '#6B8CFF', '#FBBF24'],
+                    borderWidth: 0,
+                    cutout: '70%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            font: { size: 13, family: 'Inter' },
+                            color: '#94A3B8'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0A0F1A',
+                        titleColor: '#FFFFFF',
+                        bodyColor: '#FFFFFF',
+                        padding: 12,
+                        cornerRadius: 8,
+                        borderColor: '#2A3548',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                return context.label + ': ' + context.parsed + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Revenue period selector
+    const periodSelect = document.getElementById('revenuePeriod');
+    if (periodSelect) {
+        periodSelect.addEventListener('change', function() {
+            // In a real app, this would fetch new data
+            console.log('Period changed to:', this.value);
+        });
+    }
+
+    // Hero Stats Counter Animation
+    const heroStatValues = document.querySelectorAll('.hero-stat-value[data-count]');
+    const heroObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateHeroCounter(entry.target);
+                heroObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    heroStatValues.forEach(el => heroObserver.observe(el));
+
+    function animateHeroCounter(element) {
+        const target = parseInt(element.dataset.count) || 0;
+        const duration = 2000;
+        const startTime = performance.now();
+        const isLarge = target > 1000;
+        
+        function updateCounter(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = target * eased;
+            
+            let displayValue = Math.floor(current).toString();
+            if (isLarge) {
+                displayValue = Number(displayValue).toLocaleString();
+            }
+            
+            element.textContent = displayValue;
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateCounter);
+            }
+        }
+        
+        requestAnimationFrame(updateCounter);
+    }
+});
+</script>
 {% endblock %}

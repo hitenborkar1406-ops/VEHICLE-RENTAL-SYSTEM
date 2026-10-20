@@ -1,127 +1,154 @@
 {% extends "base.html" %}
-{% block title %}Vehicles — Vehicle Rental System{% endblock %}
+
+{% block page_title_header %}Vehicles{% endblock %}
+
+{% block page_title %}Vehicles{% endblock %}
+
+{% block page_description %}Manage your fleet vehicles - add, edit, and track status{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <span class="breadcrumb-link" aria-current="page">Vehicles</span>
+</li>
+{% endblock %}
+
+{% block page_header_actions %}
+<a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary">
+    <i data-lucide="plus" aria-hidden="true"></i>
+    Add Vehicle
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Vehicle Management</h1>
-    <a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary">+ Add Vehicle</a>
-</div>
-
-<div class="filter-bar">
-    <form method="GET" action="{{ url_for('vehicles.list_vehicles') }}" class="filter-form">
+<!-- Filter Panel -->
+<div class="filter-panel" role="search" aria-label="Vehicle filters">
+    <div class="filter-grid">
         <div class="filter-group">
-            <input type="text" name="search" placeholder="Search by name or registration..." 
-                   value="{{ search }}" class="form-input" id="vehicleSearch">
+            <label class="filter-label" for="search">Search</label>
+            <div class="search-container">
+                <i data-lucide="search" class="search-icon" aria-hidden="true"></i>
+                <input type="search" class="form-input search-input" id="search" placeholder="Name or registration..." value="{{ search }}" aria-label="Search vehicles">
+            </div>
         </div>
         <div class="filter-group">
-            <select name="type" class="form-select" id="vehicleTypeFilter">
+            <label class="filter-label" for="typeFilter">Type</label>
+            <select class="form-select form-input" id="typeFilter" aria-label="Filter by vehicle type">
                 <option value="">All Types</option>
-                {% for t in vehicle_types %}
-                    <option value="{{ t }}" {% if selected_type == t %}selected{% endif %}>{{ t }}</option>
+                {% for vtype in vehicle_types %}
+                <option value="{{ vtype }}" {% if vtype == selected_type %}selected{% endif %}>{{ vtype }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="filter-group">
-            <select name="status" class="form-select" id="vehicleStatusFilter">
-                <option value="">All Statuses</option>
-                {% for s in vehicle_statuses %}
-                    <option value="{{ s }}" {% if selected_status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+            <label class="filter-label" for="statusFilter">Status</label>
+            <select class="form-select form-input" id="statusFilter" aria-label="Filter by vehicle status">
+                <option value="">All Status</option>
+                {% for status in vehicle_statuses %}
+                <option value="{{ status }}" {% if status == selected_status %}selected{% endif %}>{{ status|title }}</option>
                 {% endfor %}
             </select>
         </div>
-        <button type="submit" class="btn btn-outline">Filter</button>
-        {% if search or selected_type or selected_status %}
-            <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-ghost">Clear</a>
-        {% endif %}
-    </form>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-footer">
+        <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-secondary btn-sm">Reset Filters</a>
+        <span class="filter-results">{{ vehicles|length }} vehicle{{ 's' if vehicles|length != 1 else '' }} found</span>
+    </div>
 </div>
 
+<!-- Vehicle Cards Grid -->
 {% if vehicles %}
-<div class="table-responsive" role="region" aria-label="Vehicles table" tabindex="0">
-    <table class="data-table" id="vehicleTable">
-        <thead>
-            <tr>
-                <th scope="col">Registration</th>
-                <th scope="col">Name</th>
-                <th scope="col">Type</th>
-                <th scope="col">Daily Rate</th>
-                <th scope="col">Status</th>
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for vehicle in vehicles %}
-            <tr>
-                <td><code class="reg-number">{{ vehicle['registration_number'] }}</code></td>
-                <td class="vehicle-name">{{ vehicle['name'] }}</td>
-                <td><span class="type-badge">{{ vehicle['type'] }}</span></td>
-                <td class="amount">₹{{ "%.2f"|format(vehicle['daily_rental_rate']) }}</td>
-                <td>
-                    <span class="status-badge status-{{ vehicle['status'] }}">
-                        {{ vehicle['status']|capitalize }}
-                    </span>
-                </td>
-                <td class="actions-cell">
-                    {% if vehicle['status'] == 'available' %}
-                    <a href="{{ url_for('bookings.create_booking') }}?vehicle_id={{ vehicle['id'] }}" 
-                       class="btn btn-sm btn-primary" title="Book this vehicle" aria-label="Book {{ vehicle['name'] }}">📅 Book</a>
-                    {% endif %}
-                    <a href="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle['id']) }}" 
-                       class="btn btn-sm btn-outline" title="Edit" aria-label="Edit {{ vehicle['name'] }}">✏️ Edit</a>
-                    <form method="POST" action="{{ url_for('vehicles.delete_vehicle', vehicle_id=vehicle['id']) }}" 
-                          class="inline-form" onsubmit="return confirm('Are you sure you want to delete this vehicle? This cannot be undone.')">
-                        <button type="submit" class="btn btn-sm btn-danger" title="Delete" aria-label="Delete {{ vehicle['name'] }}">🗑️ Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Mobile Card View -->
-<div class="mobile-cards" role="list" aria-label="Vehicles list">
+<div class="card-grid" role="list" aria-label="Vehicle fleet">
     {% for vehicle in vehicles %}
-    <article class="mobile-card" role="listitem">
-        <div class="mobile-card-header">
-            <span class="vehicle-name">{{ vehicle['name'] }}</span>
-            <span class="type-badge">{{ vehicle['type'] }}</span>
+    <article class="vehicle-card" role="listitem">
+        <div class="card-top">
+            <h3 class="card-title">{{ vehicle.name }}</h3>
+            <span class="badge 
+                {% if vehicle.status == 'available' %}badge-success
+                {% elif vehicle.status == 'rented' %}badge-info
+                {% else %}badge-neutral{% endif %}">
+                {{ vehicle.status|title }}
+            </span>
         </div>
-        <dl class="mobile-card-details">
-            <div class="detail-item">
-                <dt>Registration</dt>
-                <dd><code class="reg-number">{{ vehicle['registration_number'] }}</code></dd>
+
+        <div class="card-category">
+            <span class="category-badge">{{ vehicle.type }}</span>
+        </div>
+
+        <div class="card-meta">
+            <div class="meta-item">
+                <i data-lucide="id-card" aria-hidden="true"></i>
+                <span>Reg: <strong>{{ vehicle.registration_number }}</strong></span>
             </div>
-            <div class="detail-item">
-                <dt>Daily Rate</dt>
-                <dd class="amount">₹{{ "%.2f"|format(vehicle['daily_rental_rate']) }}</dd>
+            <div class="meta-item">
+                <i data-lucide="calendar" aria-hidden="true"></i>
+                <span>Added {{ vehicle.created_at[:10] if vehicle.created_at else 'N/A' }}</span>
             </div>
-            <div class="detail-item">
-                <dt>Status</dt>
-                <dd><span class="status-badge status-{{ vehicle['status'] }}">{{ vehicle['status']|capitalize }}</span></dd>
+        </div>
+
+        <div class="card-bottom">
+            <div class="price-info">
+                <span class="price-label">Daily Rate</span>
+                <span class="price-value">₹{{ "{:,.2f}".format(vehicle.daily_rental_rate) }}</span>
             </div>
-        </dl>
-        <div class="mobile-card-actions">
-            {% if vehicle['status'] == 'available' %}
-            <a href="{{ url_for('bookings.create_booking') }}?vehicle_id={{ vehicle['id'] }}" 
-               class="btn btn-sm btn-primary">📅 Book Now</a>
-            {% endif %}
-            <a href="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle['id']) }}" class="btn btn-sm btn-outline">✏️ Edit</a>
-            <form method="POST" action="{{ url_for('vehicles.delete_vehicle', vehicle_id=vehicle['id']) }}" 
-                  class="inline-form" onsubmit="return confirm('Are you sure you want to delete this vehicle? This cannot be undone.')">
-                <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
-            </form>
+            <div style="display: flex; gap: var(--space-2);">
+                <a href="{{ url_for('bookings.create_booking', vehicle_id=vehicle.id) }}" 
+                   class="btn btn-primary btn-sm" 
+                   {% if vehicle.status != 'available' %}disabled style="pointer-events: none; opacity: 0.5;"{% endif %}
+                   aria-label="Book {{ vehicle.name }}">
+                    <i data-lucide="calendar-plus" aria-hidden="true"></i>
+                    Book
+                </a>
+                <a href="{{ url_for('vehicles.edit_vehicle', vehicle_id=vehicle.id) }}" 
+                   class="btn btn-secondary btn-sm" 
+                   aria-label="Edit {{ vehicle.name }}">
+                    <i data-lucide="edit" aria-hidden="true"></i>
+                </a>
+            </div>
         </div>
     </article>
     {% endfor %}
 </div>
-
-<p class="result-count">Showing {{ vehicles|length }} vehicle(s)</p>
 {% else %}
-<div class="empty-state">
-    <div class="empty-icon">🚗</div>
-    <h3>No vehicles found</h3>
-    <p>{% if search or selected_type or selected_status %}Try adjusting your filters or {% endif %}<a href="{{ url_for('vehicles.add_vehicle') }}">add your first vehicle</a>.</p>
+<div class="card">
+    <div class="card-body" style="text-align: center; padding: var(--space-16);">
+        <div class="empty-state">
+            <i data-lucide="truck" class="empty-state-icon"></i>
+            <h3 class="empty-state-title">No Vehicles Found</h3>
+            <p class="empty-state-message">Get started by adding your first vehicle to the fleet</p>
+            <a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary">
+                <i data-lucide="plus" aria-hidden="true"></i>
+                Add Vehicle
+            </a>
+        </div>
+    </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search');
+    const typeFilter = document.getElementById('typeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function applyFilters() {
+        const params = new URLSearchParams();
+        if (searchInput.value) params.set('search', searchInput.value);
+        if (typeFilter.value) params.set('type', typeFilter.value);
+        if (statusFilter.value) params.set('status', statusFilter.value);
+        window.location.search = params.toString();
+    }
+
+    let searchDebounce;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(applyFilters, 300);
+    });
+
+    typeFilter.addEventListener('change', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+});
+</script>
 {% endblock %}

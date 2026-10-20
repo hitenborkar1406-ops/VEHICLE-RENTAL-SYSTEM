@@ -1,86 +1,238 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Vehicle Rental System - Manage vehicles and rental bookings efficiently">
-    <title>{% block title %}Vehicle Rental System{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="description" content="Vehicle Rental System - Professional Fleet Management">
+    <title>{% block title %}FleetFlow - Vehicle Rental System{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.294.0/lucide.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
-        <div class="nav-container">
-            <a href="{{ url_for('dashboard.index') }}" class="nav-brand" aria-label="Vehicle Rental System Home">
-                <span class="brand-icon" aria-hidden="true">🚗</span>
-                <span class="brand-text">VRS</span>
-            </a>
-            <div class="nav-links" id="navLinks" role="menubar">
-                <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" role="menuitem">
-                    <span class="nav-icon" aria-hidden="true">📊</span> Dashboard
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand" aria-label="FleetFlow Home">
+                    <i data-lucide="car" class="brand-icon" aria-hidden="true"></i>
+                    <span class="brand-text">FleetFlow</span>
                 </a>
-                <a href="{{ url_for('vehicles.list_vehicles') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('vehicles.') %}active{% endif %}" role="menuitem">
-                    <span class="nav-icon" aria-hidden="true">🚙</span> Vehicles
-                </a>
-                <a href="{{ url_for('bookings.list_bookings') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('bookings.') %}active{% endif %}" role="menuitem">
-                    <span class="nav-icon" aria-hidden="true">📋</span> Bookings
-                </a>
-            </div>
-            <div class="nav-actions" style="display: flex; align-items: center; gap: var(--space-sm);">
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light theme" title="Toggle theme">
-                    <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                    </svg>
-                    <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                </button>
-                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">
-                    <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Collapse sidebar" aria-expanded="true">
+                    <i data-lucide="chevron-left" aria-hidden="true"></i>
                 </button>
             </div>
-        </div>
-    </nav>
-
-    <main class="main-content">
-        <div class="container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash-message flash-{{ category }}" role="alert">
-                                <span class="flash-icon">
-                                    {% if category == 'success' %}✅{% elif category == 'error' %}❌{% else %}ℹ️{% endif %}
-                                </span>
-                                <span class="flash-text">{{ message }}</span>
-                                <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-                            </div>
-                        {% endfor %}
+            <nav class="sidebar-nav" aria-label="Primary navigation">
+                <ul class="nav-list" role="list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard.index') }}" 
+                           class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}"
+                           aria-current="{% if request.endpoint == 'dashboard.index' %}page{% else %}false{% endif %}">
+                            <i data-lucide="layout-dashboard" class="nav-icon" aria-hidden="true"></i>
+                            <span class="nav-label">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('vehicles.list_vehicles') }}" 
+                           class="nav-link {% if request.endpoint == 'vehicles.list_vehicles' %}active{% endif %}"
+                           aria-current="{% if request.endpoint == 'vehicles.list_vehicles' %}page{% else %}false{% endif %}">
+                            <i data-lucide="truck" class="nav-icon" aria-hidden="true"></i>
+                            <span class="nav-label">Vehicles</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('bookings.list_bookings') }}" 
+                           class="nav-link {% if request.endpoint == 'bookings.list_bookings' %}active{% endif %}"
+                           aria-current="{% if request.endpoint == 'bookings.list_bookings' %}page{% else %}false{% endif %}">
+                            <i data-lucide="calendar" class="nav-icon" aria-hidden="true"></i>
+                            <span class="nav-label">Bookings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" aria-hidden="true">
+                        <i data-lucide="user"></i>
                     </div>
-                {% endif %}
-            {% endwith %}
+                    <div class="user-details">
+                        <span class="user-name">Admin</span>
+                        <span class="user-role">Administrator</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-            {% block content %}{% endblock %}
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+        <!-- Main Content Area -->
+        <main class="main-content" role="main">
+            <!-- Top Header -->
+            <header class="top-header" role="banner">
+                <div class="header-container">
+                    <div class="header-left">
+                        <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false">
+                            <i data-lucide="menu" aria-hidden="true"></i>
+                        </button>
+                        <h1 class="page-title-header">{% block page_title_header %}{% endblock %}</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="header-actions">
+                            <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark mode" aria-pressed="true">
+                                <i data-lucide="sun" class="theme-icon theme-icon-light" aria-hidden="true"></i>
+                                <i data-lucide="moon" class="theme-icon theme-icon-dark" aria-hidden="true"></i>
+                            </button>
+                            <div class="notifications" role="region" aria-label="Notifications">
+                                <button class="icon-btn notification-btn" id="notificationBtn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+                                    <i data-lucide="bell" class="notification-icon" aria-hidden="true"></i>
+                                    <span class="notification-badge" id="notificationBadge" aria-live="polite">3</span>
+                                </button>
+                                <div class="notification-dropdown" id="notificationDropdown" role="menu" aria-label="Notification list" hidden>
+                                    <div class="notification-header">
+                                        <h3>Notifications</h3>
+                                        <button class="mark-all-read" aria-label="Mark all as read">Mark all read</button>
+                                    </div>
+                                    <div class="notification-list" role="list">
+                                        <div class="notification-item unread" role="listitem">
+                                            <div class="notification-icon warning" aria-hidden="true"><i data-lucide="alert-triangle"></i></div>
+                                            <div class="notification-content">
+                                                <p class="notification-title">Maintenance Due</p>
+                                                <p class="notification-message">Toyota Camry (ABC-123) scheduled for maintenance tomorrow</p>
+                                                <time class="notification-time" datetime="2026-10-19T09:00">Tomorrow 9:00 AM</time>
+                                            </div>
+                                        </div>
+                                        <div class="notification-item unread" role="listitem">
+                                            <div class="notification-icon info" aria-hidden="true"><i data-lucide="calendar"></i></div>
+                                            <div class="notification-content">
+                                                <p class="notification-title">Booking Confirmed</p>
+                                                <p class="notification-message">New booking for Honda SUV by John Smith</p>
+                                                <time class="notification-time" datetime="2026-10-18T14:30">2 hours ago</time>
+                                            </div>
+                                        </div>
+                                        <div class="notification-item" role="listitem">
+                                            <div class="notification-icon success" aria-hidden="true"><i data-lucide="check-circle"></i></div>
+                                            <div class="notification-content">
+                                                <p class="notification-title">Booking Completed</p>
+                                                <p class="notification-message">Booking #BK-2026-0045 completed successfully</p>
+                                                <time class="notification-time" datetime="2026-10-17T16:00">Yesterday 4:00 PM</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="#" class="notification-footer">View all notifications</a>
+                                </div>
+                            </div>
+                            <div class="user-menu" role="region" aria-label="User menu">
+                                <button class="user-menu-btn" id="userMenuBtn" aria-label="User menu" aria-expanded="false" aria-haspopup="true">
+                                    <div class="user-menu-avatar" aria-hidden="true">
+                                        <i data-lucide="user" class="avatar-icon"></i>
+                                    </div>
+                                    <span class="user-menu-name">Admin</span>
+                                    <i data-lucide="chevron-down" class="user-menu-chevron" aria-hidden="true"></i>
+                                </button>
+                                <div class="user-menu-dropdown" id="userMenuDropdown" role="menu" aria-label="User options" hidden>
+                                    <div class="user-menu-header">
+                                        <div class="user-menu-avatar-large" aria-hidden="true"><i data-lucide="user"></i></div>
+                                        <div>
+                                            <p class="user-menu-fullname">Admin User</p>
+                                            <p class="user-menu-email">admin@fleetflow.com</p>
+                                        </div>
+                                    </div>
+                                    <div class="user-menu-divider"></div>
+                                    <a href="#" class="user-menu-item" role="menuitem"><i data-lucide="settings" aria-hidden="true"></i> Settings</a>
+                                    <a href="#" class="user-menu-item" role="menuitem"><i data-lucide="help-circle" aria-hidden="true"></i> Help & Support</a>
+                                    <div class="user-menu-divider"></div>
+                                    <button class="user-menu-item logout" role="menuitem"><i data-lucide="log-out" aria-hidden="true"></i> Sign Out</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="content-container">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        {% block page_header %}
+                        <nav class="breadcrumb" aria-label="Breadcrumb" role="navigation">
+                            <ol class="breadcrumb-list">
+                                <li class="breadcrumb-item">
+                                    <a href="{{ url_for('dashboard.index') }}" class="breadcrumb-link">
+                                        <i data-lucide="home" aria-hidden="true"></i>
+                                        Dashboard
+                                    </a>
+                                </li>
+                                {% block breadcrumb_items %}{% endblock %}
+                            </ol>
+                        </nav>
+                        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                        <p class="page-description">{% block page_description %}Overview of your fleet operations and key metrics{% endblock %}</p>
+                        {% endblock %}
+                    </div>
+                    <div class="page-header-actions">
+                        {% block page_header_actions %}{% endblock %}
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <div class="flash-container" id="flashContainer" role="region" aria-live="polite" aria-label="Notifications">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="flash-message flash-{{ category }}" role="alert">
+                                    <div class="flash-content">
+                                        <i data-lucide="{% if category == 'error' %}alert-circle{% elif category == 'success' %}check-circle{% elif category == 'warning' %}alert-triangle{% else %}info{% endif %}" class="flash-icon" aria-hidden="true"></i>
+                                        <span class="flash-text">{{ message }}</span>
+                                    </div>
+                                    <button class="flash-close" aria-label="Dismiss notification">
+                                        <i data-lucide="x" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Page Content -->
+                <div class="page-content">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Global Modals -->
+    <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle" hidden>
+        <div class="modal" role="document">
+            <div class="modal-header">
+                <h2 class="modal-title" id="confirmModalTitle">Confirm Action</h2>
+                <button class="modal-close" aria-label="Close modal"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="confirmModalCancel">Cancel</button>
+                <button class="btn btn-danger" id="confirmModalConfirm">Confirm</button>
+            </div>
         </div>
-    </main>
+    </div>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 Vehicle Rental System — College PBL Project</p>
+    <div class="modal-overlay" id="loadingModal" role="dialog" aria-modal="true" aria-label="Loading" hidden>
+        <div class="modal modal-loading">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <p id="loadingMessage">Processing...</p>
         </div>
-    </footer>
+    </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    {% block scripts %}{% endblock %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.294.0/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -1,184 +1,201 @@
 {% extends "base.html" %}
-{% block title %}Create Booking — Vehicle Rental System{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <h1>Create New Booking</h1>
-    <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-outline">← Back to Bookings</a>
-</div>
+{% block page_title_header %}New Booking{% endblock %}
 
-{% if not vehicles %}
-<div class="empty-state" style="max-width: 600px; margin: 0 auto;">
-    <div class="empty-icon">🚗</div>
-    <h2>No Vehicles Available for Booking</h2>
-    <p>There are currently no vehicles with "Available" status in the system. You need to add vehicles and mark them as available before creating bookings.</p>
-    <div class="card-actions" style="margin-top: var(--space-lg); justify-content: center;">
-        <a href="{{ url_for('vehicles.add_vehicle') }}" class="btn btn-primary btn-lg">+ Add Your First Vehicle</a>
-        <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-outline">Manage Vehicles</a>
-    </div>
-    <div style="margin-top: var(--space-xl); padding: var(--space-lg); background: var(--color-info-bg); border-radius: var(--radius-md); border: 1px solid var(--color-info);">
-        <h4 style="color: var(--color-info); margin-bottom: var(--space-sm);">💡 How it works</h4>
-        <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; text-align: left; max-width: 400px; margin: 0 auto;">
-            <li>Add vehicles via <strong>Vehicles → Add Vehicle</strong></li>
-            <li>Set vehicle status to <strong>"Available"</strong></li>
-            <li>Only available vehicles appear in the booking form</li>
-            <li>Vehicles in "Maintenance" or "Rented" are excluded</li>
-        </ul>
-    </div>
-</div>
-{% else %}
+{% block page_title %}New Booking{% endblock %}
 
-{% if errors %}
-<div class="flash-messages">
-    <div class="flash-message flash-error" role="alert">
-        <span class="flash-icon">❌</span>
-        <span class="flash-text">
-            {% if errors is mapping %}
-                <ul style="margin: 0; padding-left: 1.5rem;">
-                {% for field, messages in errors.items() %}
-                    {% for msg in messages %}
-                    <li>{{ field|capitalize }}: {{ msg }}</li>
-                    {% endfor %}
-                {% endfor %}
-                </ul>
-            {% else %}
-                {{ errors }}
-            {% endif %}
-        </span>
-        <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-    </div>
-</div>
-{% endif %}
+{% block page_description %}Create a new rental booking for a customer{% endblock %}
 
-<div class="form-card">
-    <form method="POST" action="{{ url_for('bookings.create_booking') }}" class="booking-form" id="createBookingForm" novalidate>
-        <div class="form-group">
-            <label for="vehicle_id" class="form-label">Select Vehicle <span class="required">*</span></label>
-            <select id="vehicle_id" name="vehicle_id" class="form-select {% if errors and errors.vehicle_id %}error{% endif %}" required aria-describedby="vehicleHint {% if errors and errors.vehicle_id %}vehicleError{% endif %}">
-                <option value="">Choose a vehicle...</option>
-                {% for vehicle in vehicles %}
-                    <option value="{{ vehicle['id'] }}" 
-                            data-rate="{{ vehicle['daily_rental_rate'] }}"
-                            {% if form_data.get('vehicle_id', '') | string == vehicle['id'] | string %}selected{% endif %}>
-                        {{ vehicle['name'] }} ({{ vehicle['registration_number'] }}) — ₹{{ "%.2f"|format(vehicle['daily_rental_rate']) }}/day
-                    </option>
-                {% endfor %}
-            </select>
-            <small id="vehicleHint" class="form-hint">{{ vehicles|length }} available vehicle(s). Only available vehicles are shown.</small>
-            {% if errors and errors.vehicle_id %}
-                <small id="vehicleError" class="form-hint form-hint-warning" role="alert">{{ errors.vehicle_id[0] }}</small>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label for="customer_name" class="form-label">Customer Name <span class="required">*</span></label>
-            <input type="text" id="customer_name" name="customer_name" 
-                   class="form-input {% if errors and errors.customer_name %}error{% endif %}" placeholder="Enter customer's full name"
-                   value="{{ form_data.get('customer_name', '') }}" required aria-describedby="customerHint {% if errors and errors.customer_name %}customerError{% endif %}">
-            {% if errors and errors.customer_name %}
-                <small id="customerError" class="form-hint form-hint-warning" role="alert">{{ errors.customer_name[0] }}</small>
-            {% endif %}
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="start_date" class="form-label">Start Date <span class="required">*</span></label>
-                <input type="date" id="start_date" name="start_date" 
-                       class="form-input {% if errors and errors.start_date %}error{% endif %}"
-                       value="{{ form_data.get('start_date', '') }}" required aria-describedby="startHint {% if errors and errors.start_date %}startError{% endif %}">
-                {% if errors and errors.start_date %}
-                    <small id="startError" class="form-hint form-hint-warning" role="alert">{{ errors.start_date[0] }}</small>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="end_date" class="form-label">End Date <span class="required">*</span></label>
-                <input type="date" id="end_date" name="end_date" 
-                       class="form-input {% if errors and errors.end_date %}error{% endif %}"
-                       value="{{ form_data.get('end_date', '') }}" required aria-describedby="endHint {% if errors and errors.end_date %}endError{% endif %}">
-                {% if errors and errors.end_date %}
-                    <small id="endError" class="form-hint form-hint-warning" role="alert">{{ errors.end_date[0] }}</small>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="rental-preview" id="rentalPreview" style="display: none;">
-            <h3>Rental Estimate</h3>
-            <div class="preview-details">
-                <div class="preview-row">
-                    <span>Daily Rate:</span>
-                    <span id="previewRate">—</span>
-                </div>
-                <div class="preview-row">
-                    <span>Number of Days:</span>
-                    <span id="previewDays">—</span>
-                </div>
-                <div class="preview-row preview-total">
-                    <span>Estimated Total:</span>
-                    <span id="previewTotal">—</span>
-                </div>
-            </div>
-            <small class="form-hint">This is a browser-side estimate. The final amount is calculated on the server.</small>
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-lg">Create Booking</button>
-            <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-ghost">Cancel</a>
-        </div>
-    </form>
-</div>
-{% endif %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <a href="{{ url_for('bookings.list_bookings') }}" class="breadcrumb-link">Bookings</a>
+</li>
+<li class="breadcrumb-item">
+    <span class="breadcrumb-link" aria-current="page">New Booking</span>
+</li>
 {% endblock %}
 
-{% block scripts %}
+{% block content %}
+<div class="two-column-layout">
+    <!-- Summary Card (Left) -->
+    <aside class="summary-card" aria-labelledby="summaryTitle">
+        <header class="summary-header">
+            <h2 class="summary-title" id="summaryTitle">Booking Summary</h2>
+        </header>
+        <div class="summary-body">
+            <div class="summary-row">
+                <span class="summary-label">Vehicle</span>
+                <span class="summary-value" id="previewVehicle">Select a vehicle</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Customer</span>
+                <span class="summary-value" id="previewCustomer">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Rental Period</span>
+                <span class="summary-value" id="previewPeriod">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Total Days</span>
+                <span class="summary-value primary" id="previewDays">0</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Daily Rate</span>
+                <span class="summary-value" id="previewDailyRate">₹0.00</span>
+            </div>
+
+            <div class="summary-inset">
+                <h3 class="inset-title">Price Breakdown</h3>
+                <div class="inset-row">
+                    <span class="inset-label">Daily Rate × Days</span>
+                    <span class="inset-value" id="insetCalculation">₹0.00 × 0 days</span>
+                </div>
+                <div class="inset-row divider total">
+                    <span class="inset-label">Total Amount</span>
+                    <span class="inset-value primary" id="insetTotal">₹0.00</span>
+                </div>
+                <p class="inset-note">Inclusive pricing: both start and end dates are counted as rental days.</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Form Card (Right) -->
+    <section class="form-card" aria-labelledby="formTitle">
+        <header class="form-card-header">
+            <h2 class="form-card-title" id="formTitle">Booking Details</h2>
+        </header>
+        <form method="POST" class="form-card-body" novalidate>
+            <div class="form-group">
+                <label class="form-label" for="vehicle_id">Vehicle <span class="required" aria-hidden="true">*</span></label>
+                <select class="form-select form-input" id="vehicle_id" name="vehicle_id" required aria-required="true">
+                    <option value="">Select Vehicle</option>
+                    {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.id }}" 
+                            data-rate="{{ vehicle.daily_rental_rate }}"
+                            data-name="{{ vehicle.name }}"
+                            data-reg="{{ vehicle.registration_number }}"
+                            {% if form_data and form_data.vehicle_id|int == vehicle.id %}selected{% endif %}>
+                        {{ vehicle.name }} ({{ vehicle.registration_number }}) - {{ vehicle.type }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if not vehicles %}
+                <p class="form-error">No available vehicles. Please add a vehicle first.</p>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="customer_name">Customer Name <span class="required" aria-hidden="true">*</span></label>
+                <input type="text" class="form-input" id="customer_name" name="customer_name" 
+                       value="{{ form_data.customer_name if form_data else '' }}" 
+                       placeholder="e.g., John Smith" required aria-required="true" autocomplete="name">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="start_date">Start Date <span class="required" aria-hidden="true">*</span></label>
+                    <input type="date" class="form-input form-select" id="start_date" name="start_date" 
+                           value="{{ form_data.start_date if form_data else '' }}" required aria-required="true" min="{{ today }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="end_date">End Date <span class="required" aria-hidden="true">*</span></label>
+                    <input type="date" class="form-input form-select" id="end_date" name="end_date" 
+                           value="{{ form_data.end_date if form_data else '' }}" required aria-required="true" min="{{ today }}">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary btn-lg btn-full" {% if not vehicles %}disabled{% endif %}>
+                    <i data-lucide="calendar-plus" aria-hidden="true"></i>
+                    Create Booking
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-    // Client-side rental preview (server recalculates authoritatively)
+document.addEventListener('DOMContentLoaded', function() {
     const vehicleSelect = document.getElementById('vehicle_id');
-    const startInput = document.getElementById('start_date');
-    const endInput = document.getElementById('end_date');
-    const preview = document.getElementById('rentalPreview');
-    const previewRate = document.getElementById('previewRate');
-    const previewDays = document.getElementById('previewDays');
-    const previewTotal = document.getElementById('previewTotal');
+    const customerInput = document.getElementById('customer_name');
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    const submitBtn = document.querySelector('button[type="submit"]');
 
-    function updatePreview() {
-        const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
-        const rate = parseFloat(selectedOption?.dataset?.rate);
-        const start = startInput.value;
-        const end = endInput.value;
+    // Set min dates to today
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.min = today;
+    endDateInput.min = today;
 
-        if (rate && start && end) {
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-            const diffTime = endDate - startDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
+    const previews = {
+        vehicle: document.getElementById('previewVehicle'),
+        customer: document.getElementById('previewCustomer'),
+        period: document.getElementById('previewPeriod'),
+        days: document.getElementById('previewDays'),
+        dailyRate: document.getElementById('previewDailyRate'),
+        calculation: document.getElementById('insetCalculation'),
+        total: document.getElementById('insetTotal')
+    };
 
-            if (diffDays > 0) {
-                const total = diffDays * rate;
-                previewRate.textContent = '₹' + rate.toFixed(2) + '/day';
-                previewDays.textContent = diffDays + ' day(s)';
-                previewTotal.textContent = '₹' + total.toFixed(2);
-                preview.style.display = 'block';
-            } else {
-                preview.style.display = 'none';
-            }
-        } else {
-            preview.style.display = 'none';
-        }
+    function calculateDays(start, end) {
+        if (!start || !end) return 0;
+        const s = new Date(start);
+        const e = new Date(end);
+        const diff = e - s;
+        return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)) + 1);
     }
 
-    vehicleSelect.addEventListener('change', updatePreview);
-    startInput.addEventListener('change', updatePreview);
-    endInput.addEventListener('change', updatePreview);
+    function updatePreview() {
+        // Vehicle
+        const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
+        if (vehicleSelect.value) {
+            previews.vehicle.textContent = selectedOption.dataset.name + ' (' + selectedOption.dataset.reg + ')';
+            previews.dailyRate.textContent = '₹' + parseFloat(selectedOption.dataset.rate).toLocaleString(undefined, { minimumFractionDigits: 2 });
+        } else {
+            previews.vehicle.textContent = 'Select a vehicle';
+            previews.dailyRate.textContent = '₹0.00';
+        }
 
-    // Set min date to today
-    const today = new Date().toISOString().split('T')[0];
-    startInput.setAttribute('min', today);
-    startInput.addEventListener('change', function() {
-        endInput.setAttribute('min', this.value);
+        // Customer
+        previews.customer.textContent = customerInput.value || '—';
+
+        // Dates & Days
+        const days = calculateDays(startDateInput.value, endDateInput.value);
+        if (startDateInput.value && endDateInput.value) {
+            const startFmt = new Date(startDateInput.value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const endFmt = new Date(endDateInput.value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            previews.period.textContent = startFmt + ' – ' + endFmt;
+        } else {
+            previews.period.textContent = '—';
+        }
+        previews.days.textContent = days;
+
+        // Calculation
+        const rate = vehicleSelect.value ? parseFloat(selectedOption.dataset.rate) : 0;
+        const total = rate * days;
+        previews.calculation.textContent = '₹' + rate.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' × ' + days + ' days';
+        previews.total.textContent = '₹' + total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+    }
+
+    [vehicleSelect, customerInput, startDateInput, endDateInput].forEach(el => {
+        el.addEventListener('input', updatePreview);
+        el.addEventListener('change', updatePreview);
     });
 
-    // Trigger preview on page load if values exist
+    // Update end date min when start date changes
+    startDateInput.addEventListener('change', function() {
+        endDateInput.min = this.value;
+        if (endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = this.value;
+        }
+        updatePreview();
+    });
+
+    // Initial preview
     updatePreview();
+});
 </script>
 {% endblock %}

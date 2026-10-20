@@ -332,13 +332,13 @@ class TestBookingPages:
         """TC-B14: Booking list page loads successfully."""
         response = client.get('/bookings/')
         assert response.status_code == 200
-        assert b'Booking Management' in response.data
+        assert b'Bookings' in response.data
 
     def test_create_booking_page(self, client):
         """TC-B15: Create booking form page loads."""
         response = client.get('/bookings/create')
         assert response.status_code == 200
-        assert b'Create New Booking' in response.data
+        assert b'New Booking' in response.data
 
     def test_view_booking_details(self, client, app):
         """TC-B16: View booking details page shows correct info."""

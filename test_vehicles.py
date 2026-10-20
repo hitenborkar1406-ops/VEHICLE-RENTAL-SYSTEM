@@ -234,13 +234,13 @@ class TestVehiclePages:
         """TC-V13: Vehicle list page loads successfully."""
         response = client.get('/vehicles/')
         assert response.status_code == 200
-        assert b'Vehicle Management' in response.data
+        assert b'Vehicles' in response.data
 
     def test_add_vehicle_page(self, client):
         """TC-V14: Add vehicle form page loads."""
         response = client.get('/vehicles/add')
         assert response.status_code == 200
-        assert b'Add New Vehicle' in response.data
+        assert b'Add Vehicle' in response.data
 
     def test_edit_vehicle_page(self, client):
         """TC-V15: Edit vehicle form page loads with data."""
