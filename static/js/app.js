@@ -129,6 +129,10 @@
     function toggleSidebarCollapse() {
         state.sidebarCollapsed = !state.sidebarCollapsed;
         elements.sidebar?.classList.toggle('collapsed', state.sidebarCollapsed);
+        if (elements.sidebarToggle) {
+            elements.sidebarToggle.setAttribute('aria-expanded', (!state.sidebarCollapsed).toString());
+            elements.sidebarToggle.setAttribute('aria-label', state.sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+        }
         localStorage.setItem('sidebarCollapsed', state.sidebarCollapsed);
     }
 
@@ -137,6 +141,10 @@
         if (saved === 'true') {
             state.sidebarCollapsed = true;
             elements.sidebar?.classList.add('collapsed');
+            if (elements.sidebarToggle) {
+                elements.sidebarToggle.setAttribute('aria-expanded', 'false');
+                elements.sidebarToggle.setAttribute('aria-label', 'Expand sidebar');
+            }
         }
     }
 
@@ -348,11 +356,23 @@
         // Theme toggle
         elements.themeToggle?.addEventListener('click', toggleTheme);
 
-        // Sidebar toggle (desktop collapse)
-        elements.sidebarToggle?.addEventListener('click', toggleSidebarCollapse);
+        // Sidebar toggle (small arrow button)
+        elements.sidebarToggle?.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                closeSidebar();
+            } else {
+                toggleSidebarCollapse();
+            }
+        });
 
-        // Mobile menu button
-        elements.mobileMenuBtn?.addEventListener('click', toggleSidebar);
+        // 3-dash menu button
+        elements.mobileMenuBtn?.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                toggleSidebar();
+            } else {
+                toggleSidebarCollapse();
+            }
+        });
 
         // Sidebar overlay click to close
         elements.sidebarOverlay?.addEventListener('click', closeSidebar);
