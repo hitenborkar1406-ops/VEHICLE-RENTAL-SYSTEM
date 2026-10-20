@@ -68,15 +68,13 @@
     function show(el) {
         if (!el) return;
         el.hidden = false;
-        // Force reflow for animation
-        el.offsetHeight;
         el.classList.add('is-visible');
     }
 
     function hide(el) {
         if (!el) return;
         el.classList.remove('is-visible');
-        setTimeout(() => { el.hidden = true; }, 200);
+        el.hidden = true;
     }
 
     // ==========================================================================
@@ -146,20 +144,31 @@
     // Dropdown Management
     // ==========================================================================
 
-    function closeAllDropdowns() {
-        $$('.notification-dropdown, .user-menu-dropdown').forEach(d => hide(d));
-        $$('.notification-btn, .user-menu-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
-        state.activeDropdown = null;
+    function closeAllDropdowns(except = null) {
+        $$('.notification-dropdown, .user-menu-dropdown').forEach(d => {
+            if (d !== except) {
+                hide(d);
+            }
+        });
+        $$('.notification-btn, .user-menu-btn').forEach(b => {
+            if (!except || !b.closest('.notifications, .user-menu')?.contains(except)) {
+                b.setAttribute('aria-expanded', 'false');
+            }
+        });
+        if (!except) {
+            state.activeDropdown = null;
+        }
     }
 
     function toggleDropdown(btn, dropdown) {
+        if (!dropdown) return;
         if (state.activeDropdown === dropdown) {
             closeAllDropdowns();
             return;
         }
-        closeAllDropdowns();
+        closeAllDropdowns(dropdown);
         show(dropdown);
-        btn.setAttribute('aria-expanded', 'true');
+        btn?.setAttribute('aria-expanded', 'true');
         state.activeDropdown = dropdown;
     }
 
