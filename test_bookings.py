@@ -416,3 +416,119 @@ class TestDashboard:
         add_test_vehicle(client, reg='MH-01-XX-0002', name='Car 2')
         response = client.get('/')
         assert b'2' in response.data  # Total vehicles
+
+
+class TestBookingCompletion:
+    """Tests for completing bookings (vehicle return workflow)."""
+
+    def test_successful_booking_completion(self, client, app):
+        """TC-B24: Mark active booking as completed and verify status."""
+        add_test_vehicle(client)
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            vehicle = db.execute("SELECT id FROM vehicles LIMIT 1").fetchone()
+            vehicle_id = vehicle['id']
+
+        add_test_booking(client, vehicle_id=vehicle_id, start='2027-04-01', end='2027-04-03')
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            booking = db.execute("SELECT id FROM bookings WHERE status = 'active' LIMIT 1").fetchone()
+            booking_id = booking['id']
+
+        response = client.post(f'/bookings/complete/{booking_id}', follow_redirects=True)
+        assert response.status_code == 200
+        assert b'marked as completed' in response.data
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            updated = db.execute("SELECT status FROM bookings WHERE id = ?", (booking_id,)).fetchone()
+            assert updated['status'] == 'completed'
+
+    def test_cannot_complete_already_completed_booking(self, client, app):
+        """TC-B25: Reject completing an already completed booking."""
+        add_test_vehicle(client)
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            vehicle = db.execute("SELECT id FROM vehicles LIMIT 1").fetchone()
+            vehicle_id = vehicle['id']
+
+        add_test_booking(client, vehicle_id=vehicle_id, start='2027-04-10', end='2027-04-12')
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            booking = db.execute("SELECT id FROM bookings WHERE status = 'active' LIMIT 1").fetchone()
+            booking_id = booking['id']
+
+        # Complete first time
+        client.post(f'/bookings/complete/{booking_id}')
+
+        # Attempt to complete second time
+        response = client.post(f'/bookings/complete/{booking_id}', follow_redirects=True)
+        assert b'Only active bookings can be marked as completed' in response.data
+
+    def test_cannot_complete_cancelled_booking(self, client, app):
+        """TC-B26: Reject completing a cancelled booking."""
+        add_test_vehicle(client)
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            vehicle = db.execute("SELECT id FROM vehicles LIMIT 1").fetchone()
+            vehicle_id = vehicle['id']
+
+        add_test_booking(client, vehicle_id=vehicle_id, start='2027-04-15', end='2027-04-18')
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            booking = db.execute("SELECT id FROM bookings WHERE status = 'active' LIMIT 1").fetchone()
+            booking_id = booking['id']
+
+        client.post(f'/bookings/cancel/{booking_id}')
+
+        response = client.post(f'/bookings/complete/{booking_id}', follow_redirects=True)
+        assert b'Only active bookings can be marked as completed' in response.data
+
+    def test_complete_nonexistent_booking(self, client):
+        """TC-B27: Completing nonexistent booking redirects with error."""
+        response = client.post('/bookings/complete/99999', follow_redirects=True)
+        assert b'Booking not found' in response.data
+
+
+class TestBookingExport:
+    """Tests for CSV report export."""
+
+    def test_export_csv_headers_and_content(self, client, app):
+        """TC-B28: Export bookings as CSV with correct headers and records."""
+        add_test_vehicle(client, reg='MH-04-EX-1000', name='Export Test Car', rate='3000')
+
+        with app.app_context():
+            from app import get_db
+            db = get_db(app)
+            vehicle = db.execute("SELECT id FROM vehicles WHERE registration_number = 'MH-04-EX-1000'").fetchone()
+            vehicle_id = vehicle['id']
+
+        add_test_booking(client, vehicle_id=vehicle_id, customer='Alice Exporter',
+                         start='2027-05-01', end='2027-05-03')
+
+        response = client.get('/bookings/export')
+        assert response.status_code == 200
+        assert response.mimetype == 'text/csv'
+        assert 'Content-Disposition' in response.headers
+        assert 'attachment; filename=rental_bookings_report.csv' in response.headers['Content-Disposition']
+
+        csv_text = response.data.decode('utf-8')
+        assert 'Booking ID,Customer Name,Vehicle Name,Registration Number' in csv_text
+        assert 'Alice Exporter' in csv_text
+        assert 'Export Test Car' in csv_text
+        assert 'MH-04-EX-1000' in csv_text
+        assert 'Active' in csv_text
+

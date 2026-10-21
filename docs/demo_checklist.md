@@ -128,14 +128,28 @@ Use this checklist during your college evaluation demo or for manual testing.
 - [ ] Try to delete Toyota Innova Crysta (has booking history)
 - [ ] ❌ "Cannot delete" error — booking history preserved
 
+### 3.8 Complete Booking (Return Vehicle)
+
+- [ ] Click "Complete" on an active booking (or from the detail view)
+- [ ] Confirm the prompt
+- [ ] ✅ "Booking marked as completed" message
+- [ ] Status badge updates to "Completed"
+- [ ] Try completing again → "Only active bookings" error
+
+### 3.9 Export Bookings to CSV
+
+- [ ] Click "Export CSV" on the Bookings page
+- [ ] ✅ Browser downloads `rental_bookings_report.csv`
+- [ ] Verify CSV contains headers, customer names, vehicles, dates, and amounts
+
 ---
 
 ## 4. Dashboard (After Data Entry)
 
 - [ ] Return to Dashboard
 - [ ] Vehicle stats updated (3 total, available/rented/maintenance counts)
-- [ ] Booking stats updated (active, cancelled counts)
-- [ ] Revenue reflects active bookings
+- [ ] Booking stats updated (active, cancelled, completed counts)
+- [ ] Revenue reflects active and completed bookings
 - [ ] Recent bookings table shows entries
 
 ---
@@ -156,7 +170,7 @@ Use this checklist during your college evaluation demo or for manual testing.
 python -m pytest -v
 ```
 
-- [ ] All 47 tests pass
+- [ ] All 52 tests pass
 - [ ] No errors or warnings
 - [ ] Tests complete in < 5 seconds
 

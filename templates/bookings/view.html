@@ -20,6 +20,13 @@
 
 {% block page_header_actions %}
 {% if booking.status == 'active' %}
+<form method="POST" action="{{ url_for('bookings.complete_booking', booking_id=booking.id) }}" 
+      onsubmit="return confirm('Mark this booking as completed? This confirms vehicle return.')" style="display: inline;">
+    <button type="submit" class="btn btn-success">
+        <i data-lucide="check-circle" aria-hidden="true"></i>
+        Complete Booking
+    </button>
+</form>
 <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking.id) }}" 
       onsubmit="return confirm('Cancel this booking? This will release the reserved dates for other customers.')" style="display: inline;">
     <button type="submit" class="btn btn-danger">
@@ -96,6 +103,13 @@
     <!-- Actions -->
     <div class="confirmation-actions">
         {% if booking.status == 'active' %}
+        <form method="POST" action="{{ url_for('bookings.complete_booking', booking_id=booking.id) }}" 
+              onsubmit="return confirm('Mark this booking as completed? This confirms vehicle return.')" style="display: inline;">
+            <button type="submit" class="btn btn-success btn-lg">
+                <i data-lucide="check-circle" aria-hidden="true"></i>
+                Complete Booking
+            </button>
+        </form>
         <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking.id) }}" 
               onsubmit="return confirm('Cancel this booking? This will release the reserved dates.')" style="display: inline;">
             <button type="submit" class="btn btn-danger btn-lg">

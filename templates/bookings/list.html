@@ -13,6 +13,10 @@
 {% endblock %}
 
 {% block page_header_actions %}
+<a href="{{ url_for('bookings.export_csv') }}" class="btn btn-secondary">
+    <i data-lucide="download" aria-hidden="true"></i>
+    Export CSV
+</a>
 <a href="{{ url_for('bookings.create_booking') }}" class="btn btn-primary">
     <i data-lucide="plus" aria-hidden="true"></i>
     New Booking
@@ -92,9 +96,15 @@
                                 <i data-lucide="eye" aria-hidden="true"></i>
                             </a>
                             {% if booking.status == 'active' %}
+                            <form method="POST" action="{{ url_for('bookings.complete_booking', booking_id=booking.id) }}" 
+                                  onsubmit="return confirm('Mark booking #{{ booking.id }} as completed (vehicle returned)?')" style="display: inline;">
+                                <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--color-success);" aria-label="Complete booking #{{ booking.id }}" title="Mark as Completed">
+                                    <i data-lucide="check-circle" aria-hidden="true"></i>
+                                </button>
+                            </form>
                             <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking.id) }}" 
                                   onsubmit="return confirm('Cancel this booking? This will release the reserved dates for other customers.')" style="display: inline;">
-                                <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" aria-label="Cancel booking #{{ booking.id }}">
+                                <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" aria-label="Cancel booking #{{ booking.id }}" title="Cancel Booking">
                                     <i data-lucide="x-circle" aria-hidden="true"></i>
                                 </button>
                             </form>

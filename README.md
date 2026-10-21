@@ -15,6 +15,8 @@ A web-based vehicle rental management system built with Python, Flask, and SQLit
 - Inclusive rental calculation: `(end_date - start_date + 1) × daily_rate`
 - Overlap prevention for active bookings on the same vehicle
 - Booking cancellation (releases dates for rebooking)
+- Booking lifecycle completion (records vehicle return and finalizes reservation)
+- One-click CSV report export for reservations
 - Historical record preservation
 - Race condition mitigation via `BEGIN IMMEDIATE`
 
@@ -79,7 +81,7 @@ Vehicle Rental System/
 ├── dashboard.py            # Dashboard blueprint
 ├── conftest.py             # Pytest fixtures and helpers
 ├── test_vehicles.py        # Vehicle module tests (22 tests)
-├── test_bookings.py        # Booking module tests (25 tests)
+├── test_bookings.py        # Booking module tests (30 tests)
 ├── requirements.txt        # Python dependencies
 ├── .gitignore              # Git ignore rules
 ├── templates/

@@ -24,8 +24,10 @@ Race Condition Mitigation:
     reservations in concurrent scenarios.
 """
 
+import csv
+import io
 from datetime import datetime, date
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 from app import get_db
 
 bookings_bp = Blueprint('bookings', __name__)
@@ -303,3 +305,82 @@ def view_booking(booking_id):
         return redirect(url_for('bookings.list_bookings'))
 
     return render_template('bookings/view.html', booking=booking)
+
+
+@bookings_bp.route('/complete/<int:booking_id>', methods=['POST'])
+def complete_booking(booking_id):
+    """
+    Mark an active booking as completed (e.g. vehicle returned).
+    Finalizes the rental record and preserves revenue calculations.
+    """
+    db = get_db()
+    booking = db.execute(
+        "SELECT * FROM bookings WHERE id = ?", (booking_id,)
+    ).fetchone()
+
+    if not booking:
+        flash('Booking not found.', 'error')
+        return redirect(url_for('bookings.list_bookings'))
+
+    if booking['status'] != 'active':
+        flash('Only active bookings can be marked as completed.', 'error')
+        return redirect(url_for('bookings.view_booking', booking_id=booking_id))
+
+    db.execute(
+        """UPDATE bookings 
+           SET status = 'completed', updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?""",
+        (booking_id,)
+    )
+    db.commit()
+    flash(f'Booking #{booking_id} marked as completed. Vehicle return recorded.', 'success')
+    return redirect(url_for('bookings.view_booking', booking_id=booking_id))
+
+
+@bookings_bp.route('/export')
+def export_csv():
+    """
+    Export all bookings as a downloadable CSV report.
+    Includes customer, vehicle, pricing, and status details.
+    """
+    db = get_db()
+    query = """
+        SELECT b.id, b.customer_name, v.name as vehicle_name, v.registration_number,
+               v.type as vehicle_type, b.start_date, b.end_date, b.total_days,
+               v.daily_rental_rate, b.total_amount, b.status, b.created_at
+        FROM bookings b
+        JOIN vehicles v ON b.vehicle_id = v.id
+        ORDER BY b.created_at DESC
+    """
+    bookings = db.execute(query).fetchall()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'Booking ID', 'Customer Name', 'Vehicle Name', 'Registration Number',
+        'Vehicle Type', 'Start Date', 'End Date', 'Total Days',
+        'Daily Rate (INR)', 'Total Amount (INR)', 'Status', 'Created At'
+    ])
+
+    for row in bookings:
+        writer.writerow([
+            row['id'],
+            row['customer_name'],
+            row['vehicle_name'],
+            row['registration_number'],
+            row['vehicle_type'],
+            row['start_date'],
+            row['end_date'],
+            row['total_days'],
+            f"{row['daily_rental_rate']:.2f}",
+            f"{row['total_amount']:.2f}",
+            row['status'].title(),
+            row['created_at']
+        ])
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=rental_bookings_report.csv'}
+    )
+
