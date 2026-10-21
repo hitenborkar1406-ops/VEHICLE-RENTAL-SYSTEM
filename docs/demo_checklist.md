@@ -16,10 +16,10 @@ Use this checklist during your college evaluation demo or for manual testing.
 
 ## 1. Dashboard
 
-- [ ] Dashboard loads with statistics (all zeros initially)
+- [ ] Dashboard loads with statistics (seeded luxury fleet & active bookings)
 - [ ] Vehicle stats show: Total, Available, Rented, Maintenance
 - [ ] Booking stats show: Total, Active, Cancelled, Completed
-- [ ] Revenue shows ₹0.00
+- [ ] Revenue summary displays calculated active booking earnings
 - [ ] Navigation links work (Dashboard, Vehicles, Bookings)
 - [ ] "Add Vehicle" and "New Booking" buttons work
 
@@ -166,7 +166,7 @@ python -m pytest -v
 
 - [ ] Stop the server (Ctrl+C in terminal)
 - [ ] Optionally delete `instance/vehicle_rental.db` to reset data
-- [ ] The database is recreated automatically on next startup
+- [ ] The database and sample luxury fleet are recreated automatically on next startup
 
 ---
 
