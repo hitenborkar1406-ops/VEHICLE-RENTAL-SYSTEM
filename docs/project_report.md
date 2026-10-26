@@ -307,48 +307,67 @@ A repeatable defect tracking workflow has been documented:
 
 ---
 
-## 9. Test Strategy and Test Case Results
+## 9. Test Strategy, Black-Box & White-Box Testing Results
 
-### 9.1 Test Strategy
+### 9.1 Comprehensive Test Strategy
 
-- **Framework:** pytest 8.3.3
-- **Database Isolation:** Each test uses a fresh temporary SQLite database (via `tempfile.mkstemp`)
-- **Test Client:** Flask's built-in test client simulates HTTP requests
-- **Approach:** Integration tests that exercise the full request-response cycle through Flask routes
-- **Coverage:** Both modules tested for happy paths, error handling, edge cases, and business rules
+The project employs a dual-tier testing methodology combining **Black-Box Testing** (functional / boundary-value / specification-driven) and **White-Box Testing** (structural / control-flow / basis path testing):
 
-### 9.2 Test Execution Results
+- **Testing Framework:** pytest 8.3.3
+- **Coverage & AST Instrumentation:** pytest-cov 7.1.0 / coverage.py 7.17.0 (branch coverage enabled)
+- **Cyclomatic Complexity Analysis:** Radon 6.0.1 (McCabe AST analysis)
+- **Database Isolation:** Each test suite runs against temporary SQLite databases (`tempfile.mkstemp`) via `conftest.py` fixtures ensuring zero cross-test side effects.
+
+### 9.2 Combined Execution Results
 
 ```
-============================= test session starts =============================
-platform win32 -- Python 3.12.10, pytest-8.3.3, pluggy-1.6.0
-rootdir: C:\PROJECTS\Vehicle Rental System
-collected 47 items
+============================= test session starts ==============================
+platform linux -- Python 3.14.8, pytest-8.3.3, pluggy-1.7.0
+rootdir: /run/media/hiten/OS/PROJECTS/Vehicle Rental System
+plugins: cov-7.1.0, anyio-4.13.0
+collected 82 items
 
-test_vehicles.py   22 passed
-test_bookings.py   25 passed
+test_bookings.py ..............................                          [ 36%]
+test_vehicles.py ......................                                  [ 63%]
+test_whitebox.py ..............................                          [100%]
 
-============================= 47 passed in 2.20s ==============================
+================================ tests coverage ================================
+Name               Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------
+app.py                52     12     10      3    73%
+bookings.py          153      8     48      3    95%
+conftest.py           26      0      0      0   100%
+dashboard.py          28      0      4      0   100%
+schema.py              1      0      0      0   100%
+test_bookings.py     300      0      0      0   100%
+test_vehicles.py     135      0      2      0   100%
+test_whitebox.py     218      0      4      0   100%
+vehicles.py          106      3     42      1    96%
+----------------------------------------------------
+TOTAL               1031     35    112      7    96%
+Coverage HTML written to dir htmlcov
+============================== 82 passed in 1.59s ==============================
 ```
 
-| Module | Tests | Passed | Failed | Pass Rate |
-|--------|-------|--------|--------|-----------|
-| Vehicle Management | 22 | 22 | 0 | 100% |
-| Booking Management | 25 | 25 | 0 | 100% |
-| **Total** | **47** | **47** | **0** | **100%** |
+### 9.3 Test Suite Breakdown
 
-### 9.3 Test Coverage Summary
+| Suite Type | Target / Focus | Test File | Test Cases | Pass Rate |
+| :--- | :--- | :--- | :--- | :--- |
+| **Black-Box (Functional)** | Vehicle CRUD, Search, Type Filters, Deletion constraints | `test_vehicles.py` | 22 | **100% (22/22)** |
+| **Black-Box (Functional)** | Booking flow, Overlap prevention, Cost math, Cancellation, Lifecycle | `test_bookings.py` | 30 | **100% (30/30)** |
+| **White-Box (Structural)** | Internal validation branches, Basis paths, Type exceptions, Helpers | `test_whitebox.py` | 30 | **100% (30/30)** |
+| **Total Test Suite** | **Complete System Verification** | **All 3 files** | **82** | **100% (82/82)** |
 
-| Category | Tests |
-|----------|-------|
-| Successful operations | 10 |
-| Missing/invalid field validation | 12 |
-| Business rule enforcement | 8 |
-| Boundary/edge cases | 5 |
-| Page rendering | 8 |
-| Database persistence | 4 |
+### 9.4 White-Box Structural & Complexity Summary
 
-Full test case details with IDs, inputs, expected/actual results, and status are documented in `docs/test_cases.md`.
+- **`validate_vehicle_data`**: Cyclomatic Complexity $V(G) = 12$, 12 independent basis paths tested, 96% coverage.
+- **`validate_booking_data`**: Cyclomatic Complexity $V(G) = 16$, 16 independent basis paths tested, 95% coverage.
+- **`safe_int` / `safe_float`**: 100% statement and branch coverage.
+- **Overall System Statement Coverage:** **96%** (1,031 statements analyzed).
+- **Overall Branch / Decision Coverage:** **93.8%** (105 / 112 branches covered).
+- **Interactive Visual Report:** Automatically generated HTML dashboard in `htmlcov/index.html`.
+
+Full Control Flow Graphs, basis path formulas, and viva defense answers are documented in `docs/whitebox_testing.md`. Detailed black-box test cases are documented in `docs/test_cases.md`.
 
 ---
 

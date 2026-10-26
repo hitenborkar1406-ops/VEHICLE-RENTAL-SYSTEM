@@ -59,14 +59,17 @@ The application will be available at **http://127.0.0.1:5000**
 ### Running Tests
 
 ```bash
-# Run all tests
-python -m pytest -v
+# Run all automated tests (82 tests: 52 Black-Box + 30 White-Box)
+python3 -m pytest -v
 
-# Run vehicle tests only
-python -m pytest test_vehicles.py -v
+# Run Black-Box tests only
+python3 -m pytest test_vehicles.py test_bookings.py -v
 
-# Run booking tests only
-python -m pytest test_bookings.py -v
+# Run White-Box tests only (basis paths & branch coverage)
+python3 -m pytest test_whitebox.py -v
+
+# Generate visual HTML branch coverage report (equivalent to Eclipse EclEmma)
+python3 -m pytest --cov=. --cov-branch --cov-report=html
 ```
 
 ## Project Structure
@@ -80,8 +83,9 @@ Vehicle Rental System/
 ├── bookings.py             # Booking management blueprint
 ├── dashboard.py            # Dashboard blueprint
 ├── conftest.py             # Pytest fixtures and helpers
-├── test_vehicles.py        # Vehicle module tests (22 tests)
-├── test_bookings.py        # Booking module tests (30 tests)
+├── test_vehicles.py        # Vehicle black-box tests (22 tests)
+├── test_bookings.py        # Booking black-box tests (30 tests)
+├── test_whitebox.py        # White-box structural & basis path tests (30 tests)
 ├── requirements.txt        # Python dependencies
 ├── .gitignore              # Git ignore rules
 ├── templates/
@@ -99,7 +103,8 @@ Vehicle Rental System/
 │   ├── css/style.css       # Complete design system
 │   └── js/main.js          # Client-side interactions
 └── docs/
-    ├── test_cases.md        # Test case document
+    ├── test_cases.md        # Black-box test cases & traceability matrix
+    ├── whitebox_testing.md  # White-box CFG, Cyclomatic Complexity & Basis Paths
     ├── project_report.md    # Comprehensive project report
     ├── presentation_outline.md  # Evaluation presentation
     ├── jira_backlog.csv     # JIRA import-ready backlog
