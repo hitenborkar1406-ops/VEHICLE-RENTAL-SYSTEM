@@ -105,7 +105,6 @@ Vehicle Rental System/
 │   │   └── styles.css      # Complete design system & responsive styling
 │   └── js/
 │       ├── app.js          # Client-side interactions & form logic
-│       ├── 3d-effects.js   # Interactive 3D background effects
 │       └── lucide.min.js   # Icon package
 └── docs/
     ├── test_cases.md        # Black-box test cases & traceability matrix

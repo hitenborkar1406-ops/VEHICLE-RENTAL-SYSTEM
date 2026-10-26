@@ -140,7 +140,7 @@
   - **Structural & Basis Path Tests (30 Tests):** Direct unit tests verifying Control Flow Graphs (CFG), McCabe's Cyclomatic Complexity ($V(G) = 12$ and $16$), and decision branches (`tests/test_whitebox.py`).
   - **Coverage:** Full statement and branch coverage analysis documented in [`docs/whitebox_testing.md`](file:///run/media/hiten/OS/PROJECTS/Vehicle%20Rental%20System/docs/whitebox_testing.md).
 - **Manual Functional Testing (PBL Viva Demonstrations):**
-  - UI responsiveness, dark/light theme switching, 3D particles background interaction (`3d-effects.js`), modal dialog animations, and flash message auto-dismissal.
+  - UI responsiveness, dark/light theme switching, modal dialog animations, interactive vehicle filtering, and flash message auto-dismissal.
 
 ---
 
