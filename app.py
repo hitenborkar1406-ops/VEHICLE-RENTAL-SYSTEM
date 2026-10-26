@@ -7,12 +7,17 @@ Creates and configures the Flask application with:
 - Foreign key enforcement
 - Blueprint registration for vehicle and booking modules
 - Database auto-initialization
+- CSRF protection
 """
 
 import os
 import sqlite3
 from flask import Flask, g
+from flask_wtf.csrf import CSRFProtect
 from schema import SCHEMA_SQL
+
+
+csrf = CSRFProtect()
 
 
 def get_db(app=None):
@@ -117,6 +122,9 @@ def create_app(config=None):
 
     # Ensure instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
+
+    # Initialize CSRF protection
+    csrf.init_app(app)
 
     # Initialize database
     init_db(app)

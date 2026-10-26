@@ -17,6 +17,7 @@ Validation Rules:
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app import get_db
+from repositories.vehicles import VehicleRepository
 
 vehicles_bp = Blueprint('vehicles', __name__)
 
@@ -25,13 +26,13 @@ VEHICLE_TYPES = ['Car', 'SUV', 'Van', 'Truck', 'Motorcycle', 'Bus']
 VEHICLE_STATUSES = ['available', 'rented', 'maintenance']
 
 
-def validate_vehicle_data(data, db, exclude_id=None):
+def validate_vehicle_data(data, repo: VehicleRepository, exclude_id=None):
     """
     Validate vehicle form data on the server side.
 
     Args:
         data: Dictionary with vehicle fields.
-        db: Database connection for uniqueness checks.
+        repo: VehicleRepository for database operations.
         exclude_id: Vehicle ID to exclude from uniqueness check (for edits).
 
     Returns:
@@ -67,14 +68,16 @@ def validate_vehicle_data(data, db, exclude_id=None):
 
     # Unique registration number
     if reg_num and not errors:
-        query = "SELECT id FROM vehicles WHERE registration_number = ?"
-        params = [reg_num]
-        if exclude_id is not None:
-            query += " AND id != ?"
-            params.append(exclude_id)
-        existing = db.execute(query, params).fetchone()
-        if existing:
+        existing = repo.get_by_registration(reg_num)
+        if existing and (exclude_id is None or existing['id'] != exclude_id):
             errors.append('A vehicle with this registration number already exists.')
+
+    # Prevent setting status to 'available' if vehicle has active bookings
+    if exclude_id is not None:
+        status = data.get('status', '').strip()
+        if status == 'available':
+            if repo.has_active_bookings(exclude_id):
+                errors.append('Cannot set status to available: vehicle has active bookings.')
 
     return errors
 
@@ -88,44 +91,43 @@ def list_vehicles():
         search: Search term for name or registration number.
         type: Filter by vehicle type.
         status: Filter by vehicle status.
+        page: Page number (default 1)
+        per_page: Items per page (default 10)
     """
     db = get_db()
+    repo = VehicleRepository(db)
     search = request.args.get('search', '').strip()
     v_type = request.args.get('type', '').strip()
     status = request.args.get('status', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
 
-    query = "SELECT * FROM vehicles WHERE 1=1"
-    params = []
+    if page < 1:
+        page = 1
+    if per_page not in [10, 25, 50, 100]:
+        per_page = 10
 
-    if search:
-        query += " AND (name LIKE ? OR registration_number LIKE ?)"
-        params.extend([f'%{search}%', f'%{search}%'])
-    if v_type:
-        query += " AND type = ?"
-        params.append(v_type)
-    if status:
-        query += " AND status = ?"
-        params.append(status)
-
-    query += " ORDER BY created_at DESC"
-    vehicles = db.execute(query, params).fetchall()
+    result = repo.get_all(search=search, v_type=v_type, status=status, page=page, per_page=per_page)
 
     return render_template('vehicles/list.html',
-                           vehicles=vehicles,
+                           vehicles=result['items'],
                            search=search,
                            selected_type=v_type,
                            selected_status=status,
                            vehicle_types=VEHICLE_TYPES,
-                           vehicle_statuses=VEHICLE_STATUSES)
+                           vehicle_statuses=VEHICLE_STATUSES,
+                           pagination=result['pagination'])
 
 
 @vehicles_bp.route('/add', methods=['GET', 'POST'])
 def add_vehicle():
     """Add a new vehicle with full server-side validation."""
+    db = get_db()
+    repo = VehicleRepository(db)
+
     if request.method == 'POST':
-        db = get_db()
         data = request.form
-        errors = validate_vehicle_data(data, db)
+        errors = validate_vehicle_data(data, repo)
 
         if errors:
             for error in errors:
@@ -134,18 +136,13 @@ def add_vehicle():
                                    vehicle_types=VEHICLE_TYPES,
                                    form_data=data)
 
-        db.execute(
-            """INSERT INTO vehicles (registration_number, name, type, daily_rental_rate, status)
-               VALUES (?, ?, ?, ?, ?)""",
-            (
-                data['registration_number'].strip(),
-                data['name'].strip(),
-                data['type'].strip(),
-                float(data['daily_rental_rate'].strip()),
-                data.get('status', 'available').strip()
-            )
+        repo.create(
+            registration_number=data['registration_number'].strip(),
+            name=data['name'].strip(),
+            v_type=data['type'].strip(),
+            daily_rental_rate=float(data['daily_rental_rate'].strip()),
+            status=data.get('status', 'available').strip()
         )
-        db.commit()
         flash('Vehicle added successfully!', 'success')
         return redirect(url_for('vehicles.list_vehicles'))
 
@@ -158,7 +155,8 @@ def add_vehicle():
 def edit_vehicle(vehicle_id):
     """Edit an existing vehicle with validation."""
     db = get_db()
-    vehicle = db.execute("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,)).fetchone()
+    repo = VehicleRepository(db)
+    vehicle = repo.get_by_id(vehicle_id)
 
     if not vehicle:
         flash('Vehicle not found.', 'error')
@@ -166,7 +164,7 @@ def edit_vehicle(vehicle_id):
 
     if request.method == 'POST':
         data = request.form
-        errors = validate_vehicle_data(data, db, exclude_id=vehicle_id)
+        errors = validate_vehicle_data(data, repo, exclude_id=vehicle_id)
 
         if errors:
             for error in errors:
@@ -177,21 +175,14 @@ def edit_vehicle(vehicle_id):
                                    vehicle_statuses=VEHICLE_STATUSES,
                                    form_data=data)
 
-        db.execute(
-            """UPDATE vehicles 
-               SET registration_number = ?, name = ?, type = ?, 
-                   daily_rental_rate = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-               WHERE id = ?""",
-            (
-                data['registration_number'].strip(),
-                data['name'].strip(),
-                data['type'].strip(),
-                float(data['daily_rental_rate'].strip()),
-                data.get('status', vehicle['status']).strip(),
-                vehicle_id
-            )
+        repo.update(
+            vehicle_id=vehicle_id,
+            registration_number=data['registration_number'].strip(),
+            name=data['name'].strip(),
+            v_type=data['type'].strip(),
+            daily_rental_rate=float(data['daily_rental_rate'].strip()),
+            status=data.get('status', vehicle['status']).strip()
         )
-        db.commit()
         flash('Vehicle updated successfully!', 'success')
         return redirect(url_for('vehicles.list_vehicles'))
 
@@ -209,27 +200,22 @@ def delete_vehicle(vehicle_id):
     This protects referential integrity and historical records.
     """
     db = get_db()
-    vehicle = db.execute("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,)).fetchone()
+    repo = VehicleRepository(db)
+    vehicle = repo.get_by_id(vehicle_id)
 
     if not vehicle:
         flash('Vehicle not found.', 'error')
         return redirect(url_for('vehicles.list_vehicles'))
 
     # Check for any bookings (active, completed, or cancelled)
-    booking_count = db.execute(
-        "SELECT COUNT(*) as count FROM bookings WHERE vehicle_id = ?",
-        (vehicle_id,)
-    ).fetchone()['count']
-
-    if booking_count > 0:
+    if repo.has_bookings(vehicle_id):
         flash(
-            f'Cannot delete this vehicle. It has {booking_count} booking record(s). '
+            'Cannot delete this vehicle. It has booking record(s). '
             'Vehicles with booking history cannot be deleted to preserve records.',
             'error'
         )
         return redirect(url_for('vehicles.list_vehicles'))
 
-    db.execute("DELETE FROM vehicles WHERE id = ?", (vehicle_id,))
-    db.commit()
+    repo.delete(vehicle_id)
     flash('Vehicle deleted successfully!', 'success')
     return redirect(url_for('vehicles.list_vehicles'))

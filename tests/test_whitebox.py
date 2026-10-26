@@ -20,6 +20,8 @@ from vehicles import validate_vehicle_data, VEHICLE_TYPES
 from bookings import validate_booking_data
 from dashboard import safe_int, safe_float
 from app import close_db
+from repositories.vehicles import VehicleRepository
+from repositories.bookings import BookingRepository
 
 
 # ============================================================================
@@ -38,7 +40,8 @@ class TestValidateVehicleDataWhiteBox:
         Branch: not reg_num, not name, not v_type, not rate_str
         """
         data = {}
-        errors = validate_vehicle_data(data, db)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo)
         assert len(errors) == 4
         assert 'Registration number is required.' in errors
         assert 'Vehicle name is required.' in errors
@@ -53,7 +56,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': 'Car',
             'daily_rental_rate': '1500'
         }
-        errors = validate_vehicle_data(data, db)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo)
         assert len(errors) == 1
         assert 'Registration number is required.' in errors
 
@@ -65,7 +69,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': 'Car',
             'daily_rental_rate': '1500'
         }
-        errors = validate_vehicle_data(data, db)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo)
         assert len(errors) == 1
         assert 'Vehicle name is required.' in errors
 
@@ -77,7 +82,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': '',
             'daily_rental_rate': '1500'
         }
-        errors = validate_vehicle_data(data, db)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo)
         assert len(errors) == 1
         assert 'Vehicle type is required.' in errors
 
@@ -92,7 +98,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': 'Boat',
             'daily_rental_rate': '2500'
         }
-        errors = validate_vehicle_data(data, db)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo)
         assert len(errors) == 1
         assert 'Vehicle type must be one of' in errors[0]
 
@@ -107,7 +114,8 @@ class TestValidateVehicleDataWhiteBox:
                 'type': v_type,
                 'daily_rental_rate': '1000'
             }
-            errors = validate_vehicle_data(data, db)
+            repo = VehicleRepository(db)
+            errors = validate_vehicle_data(data, repo)
             assert errors == []
 
     def test_path_rate_non_numeric_exception(self, db):
@@ -121,7 +129,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': 'Car',
             'daily_rental_rate': 'one_thousand'
         }
-        errors = validate_vehicle_data(data, db)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo)
         assert len(errors) == 1
         assert 'Daily rental rate must be a valid number.' in errors
 
@@ -137,7 +146,8 @@ class TestValidateVehicleDataWhiteBox:
                 'type': 'Car',
                 'daily_rental_rate': bad_rate
             }
-            errors = validate_vehicle_data(data, db)
+            repo = VehicleRepository(db)
+            errors = validate_vehicle_data(data, repo)
             assert len(errors) == 1
             assert 'Daily rental rate must be a positive number.' in errors
 
@@ -162,7 +172,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': 'SUV',
             'daily_rental_rate': '2200'
         }
-        errors = validate_vehicle_data(data, db, exclude_id=None)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo, exclude_id=None)
         assert len(errors) == 1
         assert 'A vehicle with this registration number already exists.' in errors
 
@@ -186,7 +197,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': 'Car',
             'daily_rental_rate': '2500'
         }
-        errors = validate_vehicle_data(data, db, exclude_id=vehicle_id)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo, exclude_id=vehicle_id)
         assert errors == []
 
     def test_path_update_colliding_with_different_vehicle(self, db):
@@ -214,7 +226,8 @@ class TestValidateVehicleDataWhiteBox:
             'type': 'Car',
             'daily_rental_rate': '2500'
         }
-        errors = validate_vehicle_data(data, db, exclude_id=beta_id)
+        repo = VehicleRepository(db)
+        errors = validate_vehicle_data(data, repo, exclude_id=beta_id)
         assert len(errors) == 1
         assert 'A vehicle with this registration number already exists.' in errors
 
@@ -234,7 +247,9 @@ class TestValidateBookingDataWhiteBox:
         Path: All required field guard clauses trigger.
         Branch: not vehicle_id_str, not customer_name, not start_date_str, not end_date_str
         """
-        errors, parsed = validate_booking_data({}, db)
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
+        errors, parsed = validate_booking_data({}, booking_repo, vehicle_repo)
         assert len(errors) == 4
         assert parsed == {}
         assert 'Please select a vehicle.' in errors
@@ -247,13 +262,15 @@ class TestValidateBookingDataWhiteBox:
         Path: vehicle_id_str cannot be cast to int.
         Branch: try int(vehicle_id_str) -> except ValueError
         """
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': 'not_an_id',
             'customer_name': 'Alice Wonder',
             'start_date': '2027-01-01',
             'end_date': '2027-01-05'
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert len(errors) == 1
         assert 'Invalid vehicle selection.' in errors
         assert parsed == {}
@@ -263,13 +280,15 @@ class TestValidateBookingDataWhiteBox:
         Path: vehicle_id is a valid integer, but SELECT query returns None.
         Branch: if not vehicle: errors.append('Selected vehicle does not exist.')
         """
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': '999999',
             'customer_name': 'Alice Wonder',
             'start_date': '2027-01-01',
             'end_date': '2027-01-05'
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert len(errors) == 1
         assert 'Selected vehicle does not exist.' in errors
         assert parsed == {}
@@ -287,13 +306,15 @@ class TestValidateBookingDataWhiteBox:
         db.commit()
         v_id = cursor.lastrowid
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Alice Wonder',
             'start_date': '2027-01-01',
             'end_date': '2027-01-05'
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert any('under maintenance' in e for e in errors)
         assert parsed == {}
 
@@ -310,13 +331,15 @@ class TestValidateBookingDataWhiteBox:
         db.commit()
         v_id = cursor.lastrowid
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Alice Wonder',
             'start_date': '10-01-2027',  # Invalid format
             'end_date': '2027-01-12'
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert len(errors) == 1
         assert 'Start date must be in YYYY-MM-DD format.' in errors
         assert parsed == {}
@@ -334,13 +357,15 @@ class TestValidateBookingDataWhiteBox:
         db.commit()
         v_id = cursor.lastrowid
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Alice Wonder',
             'start_date': '2027-01-10',
             'end_date': 'invalid-end-date'
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert len(errors) == 1
         assert 'End date must be in YYYY-MM-DD format.' in errors
         assert parsed == {}
@@ -361,13 +386,15 @@ class TestValidateBookingDataWhiteBox:
         past_date = (date.today() - timedelta(days=5)).isoformat()
         future_date = (date.today() + timedelta(days=2)).isoformat()
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Alice Wonder',
             'start_date': past_date,
             'end_date': future_date
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert 'Start date cannot be in the past.' in errors
         assert parsed == {}
 
@@ -387,13 +414,15 @@ class TestValidateBookingDataWhiteBox:
         start = (date.today() + timedelta(days=10)).isoformat()
         end = (date.today() + timedelta(days=5)).isoformat()
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Alice Wonder',
             'start_date': start,
             'end_date': end
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert 'End date must be on or after the start date.' in errors
         assert parsed == {}
 
@@ -413,13 +442,15 @@ class TestValidateBookingDataWhiteBox:
         start = (date.today() + timedelta(days=2)).isoformat()
         end = (date.today() + timedelta(days=4)).isoformat()  # 3 days: d2, d3, d4
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Robert Brown',
             'start_date': start,
             'end_date': end
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert errors == []
         assert parsed['vehicle_id'] == v_id
         assert parsed['customer_name'] == 'Robert Brown'
@@ -454,13 +485,15 @@ class TestValidateBookingDataWhiteBox:
         start_2 = (date.today() + timedelta(days=12)).isoformat()
         end_2 = (date.today() + timedelta(days=18)).isoformat()
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Conflict Seeker',
             'start_date': start_2,
             'end_date': end_2
         }
-        errors, parsed = validate_booking_data(data, db)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
         assert len(errors) == 1
         assert 'already has an active booking from' in errors[0]
 
@@ -487,6 +520,8 @@ class TestValidateBookingDataWhiteBox:
         db.commit()
         booking_id = b_cursor.lastrowid
 
+        booking_repo = BookingRepository(db)
+        vehicle_repo = VehicleRepository(db)
         data = {
             'vehicle_id': str(v_id),
             'customer_name': 'Existing Customer Updated',
@@ -494,7 +529,7 @@ class TestValidateBookingDataWhiteBox:
             'end_date': end_1
         }
         # Exclude this booking ID
-        errors, parsed = validate_booking_data(data, db, exclude_booking_id=booking_id)
+        errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo, exclude_booking_id=booking_id)
         assert errors == []
         assert parsed['total_days'] == 6
 

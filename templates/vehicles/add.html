@@ -65,6 +65,7 @@
             <h2 class="form-card-title" id="formTitle">Vehicle Information</h2>
         </header>
         <form method="POST" class="form-card-body" novalidate>
+            {{ csrf_input() }}
             <div class="form-group">
                 <label class="form-label" for="registration_number">Registration Number <span class="required" aria-hidden="true">*</span></label>
                 <input type="text" class="form-input" id="registration_number" name="registration_number" 

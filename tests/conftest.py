@@ -29,6 +29,7 @@ def app():
         'TESTING': True,
         'DATABASE': db_path,
         'SECRET_KEY': 'test-secret-key',
+        'WTF_CSRF_ENABLED': False,
     })
 
     yield test_app
@@ -61,6 +62,7 @@ def add_test_vehicle(client, reg='MH-01-AB-1234', name='Toyota Innova',
         'name': name,
         'type': v_type,
         'daily_rental_rate': rate,
+        'csrf_token': 'test',
     }, follow_redirects=True)
 
 
@@ -72,4 +74,5 @@ def add_test_booking(client, vehicle_id=1, customer='John Doe',
         'customer_name': customer,
         'start_date': start,
         'end_date': end,
+        'csrf_token': 'test',
     }, follow_redirects=True)

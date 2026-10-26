@@ -52,7 +52,15 @@
     <div class="filter-divider"></div>
     <div class="filter-footer">
         <a href="{{ url_for('vehicles.list_vehicles') }}" class="btn btn-secondary btn-sm">Reset Filters</a>
-        <span class="filter-results">{{ vehicles|length }} vehicle{{ 's' if vehicles|length != 1 else '' }} found</span>
+        <span class="filter-results">{{ pagination.total }} vehicle{{ 's' if pagination.total != 1 else '' }} found</span>
+    </div>
+    <div class="filter-footer">
+        <label class="filter-label" for="perPage">Per Page</label>
+        <select class="form-select form-input" id="perPage" style="width: auto; min-width: 100px;" aria-label="Items per page">
+            {% for pp in [10, 25, 50, 100] %}
+            <option value="{{ pp }}" {% if pp == pagination.per_page %}selected{% endif %}>{{ pp }}</option>
+            {% endfor %}
+        </select>
     </div>
 </div>
 
@@ -125,6 +133,59 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Pagination -->
+{% if pagination.total_pages > 1 %}
+<nav class="pagination" aria-label="Vehicle list pagination">
+    <ul class="pagination-list" role="list">
+        {% if pagination.has_prev %}
+        <li class="pagination-item">
+            <a href="{{ url_for('vehicles.list_vehicles', page=pagination.prev_page, per_page=pagination.per_page, search=search, type=selected_type, status=selected_status) }}" 
+               class="pagination-link" aria-label="Previous page">
+                <i data-lucide="chevron-left" aria-hidden="true"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="pagination-item">
+            <span class="pagination-link disabled" aria-hidden="true"><i data-lucide="chevron-left" aria-hidden="true"></i></span>
+        </li>
+        {% endif %}
+
+        {% for p in range(1, pagination.total_pages + 1) %}
+            {% if p == pagination.page %}
+            <li class="pagination-item">
+                <span class="pagination-link active" aria-current="page">{{ p }}</span>
+            </li>
+            {% elif p == 1 or p == pagination.total_pages or (p >= pagination.page - 2 and p <= pagination.page + 2) %}
+            <li class="pagination-item">
+                <a href="{{ url_for('vehicles.list_vehicles', page=p, per_page=pagination.per_page, search=search, type=selected_type, status=selected_status) }}" 
+                   class="pagination-link">{{ p }}</a>
+            </li>
+            {% elif p == pagination.page - 3 or p == pagination.page + 3 %}
+            <li class="pagination-item">
+                <span class="pagination-ellipsis" aria-hidden="true">…</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+        <li class="pagination-item">
+            <a href="{{ url_for('vehicles.list_vehicles', page=pagination.next_page, per_page=pagination.per_page, search=search, type=selected_type, status=selected_status) }}" 
+               class="pagination-link" aria-label="Next page">
+                <i data-lucide="chevron-right" aria-hidden="true"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="pagination-item">
+            <span class="pagination-link disabled" aria-hidden="true"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
+        </li>
+        {% endif %}
+    </ul>
+    <div class="pagination-info">
+        Showing {{ (pagination.page - 1) * pagination.per_page + 1 }} to {{ [pagination.page * pagination.per_page, pagination.total] | min }} of {{ pagination.total }} results
+    </div>
+</nav>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -133,12 +194,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search');
     const typeFilter = document.getElementById('typeFilter');
     const statusFilter = document.getElementById('statusFilter');
+    const perPageSelect = document.getElementById('perPage');
 
     function applyFilters() {
         const params = new URLSearchParams();
         if (searchInput.value) params.set('search', searchInput.value);
         if (typeFilter.value) params.set('type', typeFilter.value);
         if (statusFilter.value) params.set('status', statusFilter.value);
+        if (perPageSelect.value) params.set('per_page', perPageSelect.value);
+        params.delete('page'); // Reset to first page when filters change
         window.location.search = params.toString();
     }
 
@@ -150,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     typeFilter.addEventListener('change', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
+    perPageSelect.addEventListener('change', applyFilters);
 });
 </script>
 {% endblock %}

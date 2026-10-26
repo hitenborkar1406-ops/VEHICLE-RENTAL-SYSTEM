@@ -65,6 +65,7 @@
             <h2 class="form-card-title" id="formTitle">Booking Details</h2>
         </header>
         <form method="POST" class="form-card-body" novalidate>
+            {{ csrf_input() }}
             <div class="form-group">
                 <label class="form-label" for="vehicle_id">Vehicle <span class="required" aria-hidden="true">*</span></label>
                 <select class="form-select form-input" id="vehicle_id" name="vehicle_id" required aria-required="true">

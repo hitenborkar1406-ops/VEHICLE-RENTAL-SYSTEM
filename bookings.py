@@ -29,17 +29,21 @@ import io
 from datetime import datetime, date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 from app import get_db
+from repositories.bookings import BookingRepository
+from repositories.vehicles import VehicleRepository
 
 bookings_bp = Blueprint('bookings', __name__)
 
 
-def validate_booking_data(data, db, exclude_booking_id=None):
+def validate_booking_data(data, booking_repo: BookingRepository, vehicle_repo: VehicleRepository,
+                          exclude_booking_id=None):
     """
     Validate booking form data on the server side.
 
     Args:
         data: Dictionary with booking fields.
-        db: Database connection.
+        booking_repo: BookingRepository for database operations.
+        vehicle_repo: VehicleRepository for database operations.
         exclude_booking_id: Booking ID to exclude from overlap check (for future edits).
 
     Returns:
@@ -76,9 +80,7 @@ def validate_booking_data(data, db, exclude_booking_id=None):
         return errors, parsed
 
     # Check vehicle exists
-    vehicle = db.execute(
-        "SELECT * FROM vehicles WHERE id = ?", (vehicle_id,)
-    ).fetchone()
+    vehicle = vehicle_repo.get_by_id(vehicle_id)
     if not vehicle:
         errors.append('Selected vehicle does not exist.')
         return errors, parsed
@@ -117,20 +119,7 @@ def validate_booking_data(data, db, exclude_booking_id=None):
     total_amount = total_days * vehicle['daily_rental_rate']
 
     # Check for overlapping active bookings
-    overlap_query = """
-        SELECT id, start_date, end_date FROM bookings
-        WHERE vehicle_id = ?
-          AND status = 'active'
-          AND start_date <= ?
-          AND end_date >= ?
-    """
-    overlap_params = [vehicle_id, end_date_str, start_date_str]
-
-    if exclude_booking_id is not None:
-        overlap_query += " AND id != ?"
-        overlap_params.append(exclude_booking_id)
-
-    overlapping = db.execute(overlap_query, overlap_params).fetchone()
+    overlapping = booking_repo.check_overlap(vehicle_id, start_date_str, end_date_str, exclude_booking_id)
     if overlapping:
         errors.append(
             f'This vehicle already has an active booking from '
@@ -155,32 +144,24 @@ def validate_booking_data(data, db, exclude_booking_id=None):
 def list_bookings():
     """List all bookings with vehicle info and status."""
     db = get_db()
+    booking_repo = BookingRepository(db)
     status_filter = request.args.get('status', '').strip()
     search = request.args.get('search', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
 
-    query = """
-        SELECT b.*, v.name as vehicle_name, v.registration_number, v.type as vehicle_type
-        FROM bookings b
-        JOIN vehicles v ON b.vehicle_id = v.id
-        WHERE 1=1
-    """
-    params = []
+    if page < 1:
+        page = 1
+    if per_page not in [10, 25, 50, 100]:
+        per_page = 10
 
-    if status_filter:
-        query += " AND b.status = ?"
-        params.append(status_filter)
-
-    if search:
-        query += " AND (b.customer_name LIKE ? OR v.name LIKE ? OR v.registration_number LIKE ?)"
-        params.extend([f'%{search}%', f'%{search}%', f'%{search}%'])
-
-    query += " ORDER BY b.created_at DESC"
-    bookings = db.execute(query, params).fetchall()
+    result = booking_repo.get_all(status_filter=status_filter, search=search, page=page, per_page=per_page)
 
     return render_template('bookings/list.html',
-                           bookings=bookings,
+                           bookings=result['items'],
                            status_filter=status_filter,
-                           search=search)
+                           search=search,
+                           pagination=result['pagination'])
 
 
 @bookings_bp.route('/create', methods=['GET', 'POST'])
@@ -192,6 +173,8 @@ def create_booking():
     when multiple users might book the same vehicle simultaneously.
     """
     db = get_db()
+    booking_repo = BookingRepository(db)
+    vehicle_repo = VehicleRepository(db)
 
     if request.method == 'POST':
         data = request.form
@@ -200,34 +183,29 @@ def create_booking():
         # This reduces the race condition window for concurrent bookings
         db.execute("BEGIN IMMEDIATE")
         try:
-            errors, parsed = validate_booking_data(data, db)
+            errors, parsed = validate_booking_data(data, booking_repo, vehicle_repo)
 
             if errors:
                 db.execute("ROLLBACK")
                 for error in errors:
                     flash(error, 'error')
-                vehicles = db.execute(
-                    "SELECT * FROM vehicles WHERE status = 'available' ORDER BY name"
-                ).fetchall()
+                vehicles = vehicle_repo.get_available()
                 return render_template('bookings/create.html',
                                        vehicles=vehicles,
                                        form_data=data,
                                        today=date.today().isoformat())
 
-            db.execute(
-                """INSERT INTO bookings 
-                   (vehicle_id, customer_name, start_date, end_date, total_days, total_amount, status)
-                   VALUES (?, ?, ?, ?, ?, ?, 'active')""",
-                (
-                    parsed['vehicle_id'],
-                    parsed['customer_name'],
-                    parsed['start_date'],
-                    parsed['end_date'],
-                    parsed['total_days'],
-                    parsed['total_amount'],
-                )
+            booking_repo.create(
+                vehicle_id=parsed['vehicle_id'],
+                customer_name=parsed['customer_name'],
+                start_date=parsed['start_date'],
+                end_date=parsed['end_date'],
+                total_days=parsed['total_days'],
+                total_amount=parsed['total_amount']
             )
-            db.execute("COMMIT")
+            # Update vehicle status to rented
+            vehicle_repo.update_status(parsed['vehicle_id'], 'rented')
+            db.commit()
             flash(
                 f'Booking created successfully! '
                 f'{parsed["total_days"]} day(s) × ₹{parsed["daily_rate"]:.2f}/day = '
@@ -240,16 +218,14 @@ def create_booking():
             raise
 
     # Only show available vehicles for booking
-    vehicles = db.execute(
-        "SELECT * FROM vehicles WHERE status = 'available' ORDER BY name"
-    ).fetchall()
-    
+    vehicles = vehicle_repo.get_available()
+
     # Pre-select vehicle if passed via query parameter
     preselected_vehicle_id = request.args.get('vehicle_id', type=int)
     form_data = {}
     if preselected_vehicle_id:
         form_data['vehicle_id'] = preselected_vehicle_id
-    
+
     return render_template('bookings/create.html',
                            vehicles=vehicles,
                            form_data=form_data,
@@ -264,41 +240,50 @@ def cancel_booking(booking_id):
     preserved for historical reference.
     """
     db = get_db()
-    booking = db.execute(
-        "SELECT * FROM bookings WHERE id = ?", (booking_id,)
-    ).fetchone()
+    booking_repo = BookingRepository(db)
+    vehicle_repo = VehicleRepository(db)
 
-    if not booking:
-        flash('Booking not found.', 'error')
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        booking = booking_repo.get_by_id_simple(booking_id)
+
+        if not booking:
+            db.execute("ROLLBACK")
+            flash('Booking not found.', 'error')
+            return redirect(url_for('bookings.list_bookings'))
+
+        if booking['status'] != 'active':
+            db.execute("ROLLBACK")
+            flash('Only active bookings can be cancelled.', 'error')
+            return redirect(url_for('bookings.list_bookings'))
+
+        vehicle_id = booking['vehicle_id']
+
+        if not booking_repo.cancel(booking_id):
+            db.execute("ROLLBACK")
+            flash('Failed to cancel booking.', 'error')
+            return redirect(url_for('bookings.list_bookings'))
+
+        # Check if vehicle has any other active bookings
+        other_active = booking_repo.count_active_by_vehicle(vehicle_id, exclude_booking_id=booking_id)
+
+        if other_active == 0:
+            vehicle_repo.update_status(vehicle_id, 'available')
+
+        db.commit()
+        flash('Booking cancelled successfully. The reserved dates are now available.', 'success')
         return redirect(url_for('bookings.list_bookings'))
-
-    if booking['status'] != 'active':
-        flash('Only active bookings can be cancelled.', 'error')
-        return redirect(url_for('bookings.list_bookings'))
-
-    db.execute(
-        """UPDATE bookings 
-           SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
-           WHERE id = ?""",
-        (booking_id,)
-    )
-    db.commit()
-    flash('Booking cancelled successfully. The reserved dates are now available.', 'success')
-    return redirect(url_for('bookings.list_bookings'))
+    except Exception:
+        db.execute("ROLLBACK")
+        raise
 
 
 @bookings_bp.route('/view/<int:booking_id>')
 def view_booking(booking_id):
     """View detailed information about a specific booking."""
     db = get_db()
-    booking = db.execute(
-        """SELECT b.*, v.name as vehicle_name, v.registration_number, 
-                  v.type as vehicle_type, v.daily_rental_rate
-           FROM bookings b
-           JOIN vehicles v ON b.vehicle_id = v.id
-           WHERE b.id = ?""",
-        (booking_id,)
-    ).fetchone()
+    booking_repo = BookingRepository(db)
+    booking = booking_repo.get_by_id(booking_id)
 
     if not booking:
         flash('Booking not found.', 'error')
@@ -314,27 +299,42 @@ def complete_booking(booking_id):
     Finalizes the rental record and preserves revenue calculations.
     """
     db = get_db()
-    booking = db.execute(
-        "SELECT * FROM bookings WHERE id = ?", (booking_id,)
-    ).fetchone()
+    booking_repo = BookingRepository(db)
+    vehicle_repo = VehicleRepository(db)
 
-    if not booking:
-        flash('Booking not found.', 'error')
-        return redirect(url_for('bookings.list_bookings'))
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        booking = booking_repo.get_by_id_simple(booking_id)
 
-    if booking['status'] != 'active':
-        flash('Only active bookings can be marked as completed.', 'error')
+        if not booking:
+            db.execute("ROLLBACK")
+            flash('Booking not found.', 'error')
+            return redirect(url_for('bookings.list_bookings'))
+
+        if booking['status'] != 'active':
+            db.execute("ROLLBACK")
+            flash('Only active bookings can be marked as completed.', 'error')
+            return redirect(url_for('bookings.view_booking', booking_id=booking_id))
+
+        vehicle_id = booking['vehicle_id']
+
+        if not booking_repo.complete(booking_id):
+            db.execute("ROLLBACK")
+            flash('Failed to complete booking.', 'error')
+            return redirect(url_for('bookings.view_booking', booking_id=booking_id))
+
+        # Check if vehicle has any other active bookings
+        other_active = booking_repo.count_active_by_vehicle(vehicle_id, exclude_booking_id=booking_id)
+
+        if other_active == 0:
+            vehicle_repo.update_status(vehicle_id, 'available')
+
+        db.commit()
+        flash(f'Booking #{booking_id} marked as completed. Vehicle return recorded.', 'success')
         return redirect(url_for('bookings.view_booking', booking_id=booking_id))
-
-    db.execute(
-        """UPDATE bookings 
-           SET status = 'completed', updated_at = CURRENT_TIMESTAMP
-           WHERE id = ?""",
-        (booking_id,)
-    )
-    db.commit()
-    flash(f'Booking #{booking_id} marked as completed. Vehicle return recorded.', 'success')
-    return redirect(url_for('bookings.view_booking', booking_id=booking_id))
+    except Exception:
+        db.execute("ROLLBACK")
+        raise
 
 
 @bookings_bp.route('/export')
@@ -344,15 +344,8 @@ def export_csv():
     Includes customer, vehicle, pricing, and status details.
     """
     db = get_db()
-    query = """
-        SELECT b.id, b.customer_name, v.name as vehicle_name, v.registration_number,
-               v.type as vehicle_type, b.start_date, b.end_date, b.total_days,
-               v.daily_rental_rate, b.total_amount, b.status, b.created_at
-        FROM bookings b
-        JOIN vehicles v ON b.vehicle_id = v.id
-        ORDER BY b.created_at DESC
-    """
-    bookings = db.execute(query).fetchall()
+    booking_repo = BookingRepository(db)
+    bookings = booking_repo.get_all_for_export()
 
     output = io.StringIO()
     writer = csv.writer(output)

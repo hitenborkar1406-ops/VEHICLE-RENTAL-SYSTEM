@@ -20,6 +20,7 @@
 
 {% block page_header_actions %}
 <form method="POST" action="{{ url_for('vehicles.delete_vehicle', vehicle_id=vehicle.id) }}" onsubmit="return confirmDelete(event)" style="display: inline;">
+    {{ csrf_input() }}
     <button type="submit" class="btn btn-danger">
         <i data-lucide="trash-2" aria-hidden="true"></i>
         Delete
@@ -94,6 +95,7 @@
             <h2 class="form-card-title" id="formTitle">Edit Vehicle</h2>
         </header>
         <form method="POST" class="form-card-body" novalidate>
+            {{ csrf_input() }}
             <div class="form-group">
                 <label class="form-label" for="registration_number">Registration Number <span class="required" aria-hidden="true">*</span></label>
                 <input type="text" class="form-input" id="registration_number" name="registration_number" 
