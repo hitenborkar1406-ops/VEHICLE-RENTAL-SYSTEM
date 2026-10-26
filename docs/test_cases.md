@@ -7,11 +7,11 @@
 - **Web Framework:** Flask 3.0.3
 - **Database:** SQLite 3 (isolated in-memory/temp `.db` instances per test fixture via `conftest.py`)
 - **Execution Command:** `python3 -m pytest -v`
-- **Execution Date:** 2026-10-20
-- **Total Test Cases Documented:** 47
-- **Total Automated Tests Executed:** 47
-- **Difference between Automated & Documented:** 0 (100% 1-to-1 parity)
-- **Passed:** 47 (100%)
+- **Execution Date:** 2026-10-26
+- **Total Automated Tests Executed:** 82 (52 Black-Box + 30 White-Box)
+- **Black-Box Functional Tests:** 52 (22 Vehicles + 30 Bookings)
+- **White-Box Structural Tests:** 30 (Basis Paths & Internal Logic)
+- **Passed:** 82 (100%)
 - **Failed:** 0
 - **Skipped / Not Run:** 0
 
@@ -132,11 +132,13 @@
 
 ---
 
-## 6. Automated vs. Manual Testing Distinction
-- **Automated Tests (47 Total):**
-  - **Vehicle Management:** 22 automated integration/unit tests executing via pytest HTTP client against temporary SQLite databases.
-  - **Booking Management:** 25 automated integration/unit tests validating business calculations, collision prevention, date rules, and database state transitions.
-  - **Automation Tooling:** pytest with `conftest.py` fixtures ensuring zero side-effects between test runs.
+## 6. Dual-Tier Automated Testing Breakdown
+- **Black-Box Tests (52 Total):**
+  - **Vehicle Management (22 Tests):** Integration tests executing via pytest HTTP client against temporary SQLite databases (`test_vehicles.py`).
+  - **Booking Management (30 Tests):** Integration tests validating business calculations, collision prevention, date rules, status transitions, lifecycle completion, and CSV reports (`test_bookings.py`).
+- **White-Box Tests (30 Total):**
+  - **Structural & Basis Path Tests (30 Tests):** Direct unit tests verifying Control Flow Graphs (CFG), McCabe's Cyclomatic Complexity ($V(G) = 12$ and $16$), and decision branches (`test_whitebox.py`).
+  - **Coverage:** Full statement and branch coverage analysis documented in [`docs/whitebox_testing.md`](file:///run/media/hiten/OS/PROJECTS/Vehicle%20Rental%20System/docs/whitebox_testing.md).
 - **Manual Functional Testing (PBL Viva Demonstrations):**
   - UI responsiveness, dark/light theme switching, 3D particles background interaction (`3d-effects.js`), modal dialog animations, and flash message auto-dismissal.
 

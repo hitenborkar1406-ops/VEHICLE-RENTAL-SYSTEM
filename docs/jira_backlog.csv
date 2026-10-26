@@ -40,4 +40,6 @@ Task,Write test_bookings.py,25 test cases for booking management module.,Testing
 Task,Execute test suite and record results,Run pytest and document actual pass/fail results.,Testing & Defect Resolution,High,1,,Sprint 1,Done
 Task,Create test case document,Document all test cases with IDs and actual results.,Testing & Defect Resolution,Medium,1,,Sprint 1,Done
 Task,Create project report,Comprehensive report with all required sections.,Testing & Defect Resolution,Medium,2,,Sprint 1,Done
-Task,Create JIRA backlog CSV,Import-ready CSV with epics/stories/tasks.,Testing & Defect Resolution,Low,1,,Sprint 1,Done
+Story,Implement white-box structural testing,"As a QA engineer, I want basis path testing and branch coverage for internal validation logic to verify all decision paths.",Testing & Defect Resolution,High,5,"Control flow graphs derived, Cyclomatic complexity V(G) computed, all 12 and 16 basis paths tested with >90% branch coverage.",Sprint 1,Done
+Task,Write test_whitebox.py,"30 test cases for basis paths, guard clauses, and exception branches.",Testing & Defect Resolution,High,2,,Sprint 1,Done
+Task,Generate coverage and CFG report,"Document Control Flow Graphs, Cyclomatic Complexity calculations, and HTML coverage report.",Testing & Defect Resolution,Medium,2,,Sprint 1,Done

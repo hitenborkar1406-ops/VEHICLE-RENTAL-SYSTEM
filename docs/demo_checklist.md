@@ -164,15 +164,24 @@ Use this checklist during your college evaluation demo or for manual testing.
 
 ---
 
-## 6. Run Automated Tests
+## 6. Run Automated Tests & White-Box Coverage
 
 ```bash
-python -m pytest -v
+# 1. Run all 82 automated tests (Dual-Tier: Black-Box + White-Box)
+python3 -m pytest -v
+
+# 2. Run White-Box structural & basis path tests only
+python3 -m pytest test_whitebox.py -v
+
+# 3. Generate and view interactive branch coverage report
+python3 -m pytest --cov=. --cov-branch --cov-report=html
+# Open htmlcov/index.html in browser to demonstrate 96% coverage
 ```
 
-- [ ] All 52 tests pass
-- [ ] No errors or warnings
-- [ ] Tests complete in < 5 seconds
+- [ ] All 82 tests pass (52 Black-Box + 30 White-Box)
+- [ ] Statement coverage reaches 96%
+- [ ] Branch coverage reaches 93.8%
+- [ ] Zero defects or regressions
 
 ---
 

@@ -158,6 +158,6 @@ What actually happened.
 
 ## Current Status
 
-**No defects were discovered during automated testing.** All 47 test cases passed on the first execution. The JIRA backlog CSV is ready for import. No bug issues need to be created at this time.
+**No defects were discovered during automated testing.** All 82 test cases (52 Black-Box + 30 White-Box) passed on execution with 96% coverage. The JIRA backlog CSV is ready for import. No bug issues need to be created at this time.
 
 If defects are found during manual testing or future development, use the workflow above to track them.

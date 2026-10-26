@@ -7,7 +7,7 @@
 **Project Title:** Vehicle Rental System
 
 **Abstract:**
-The Vehicle Rental System is a web-based application developed to streamline the management of vehicle fleets and rental bookings. Built using Python, Flask, and SQLite, the system provides an intuitive interface for adding and managing vehicles, creating and tracking rental bookings, preventing scheduling conflicts, and calculating rental charges. The application features server-side validation, inclusive rental day calculation, overlapping booking prevention, and a comprehensive automated test suite of 47 test cases. This project was developed as an individual college PBL (Project-Based Learning) assignment to demonstrate proficiency in full-stack web development, database management, software testing, and project management using JIRA.
+The Vehicle Rental System is a web-based application developed to streamline the management of vehicle fleets and rental bookings. Built using Python, Flask, and SQLite, the system provides an intuitive interface for adding and managing vehicles, creating and tracking rental bookings, preventing scheduling conflicts, and calculating rental charges. The application features server-side validation, inclusive rental day calculation, overlapping booking prevention, and a comprehensive automated test suite of 82 test cases (52 Black-Box + 30 White-Box) achieving 96% statement and 94% branch coverage. This project was developed as an individual college PBL (Project-Based Learning) assignment to demonstrate proficiency in full-stack web development, database management, software testing, and project management using JIRA.
 
 ---
 
@@ -45,7 +45,7 @@ The proposed Vehicle Rental System provides an online platform for managing vehi
 - Overlapping booking prevention
 - Server-side validation and data integrity
 - Dashboard with statistics
-- Automated pytest test suite (47 tests)
+- Automated pytest dual-tier test suite (82 tests: 52 Black-Box + 30 White-Box)
 - JIRA project management plan
 
 **Out of Scope (Future Enhancements):**
@@ -303,7 +303,7 @@ A repeatable defect tracking workflow has been documented:
 
 **Bug report template** and **severity definitions** are provided in `docs/jira_setup_guide.md`.
 
-**Note:** No actual defects were discovered during automated testing (47/47 passed). The defect tracking workflow and templates are ready for use during manual testing or future development.
+**Note:** No defects were discovered during automated testing (82/82 passed). The defect tracking workflow and templates are ready for use during manual testing or future development.
 
 ---
 
@@ -375,7 +375,7 @@ Full Control Flow Graphs, basis path formulas, and viva defense answers are docu
 
 ### Defects Discovered During Automated Testing
 
-**No defects were discovered.** All 47 automated tests passed on the first execution.
+**No defects were discovered.** All 82 automated tests passed on execution with zero regressions.
 
 This section is reserved for defects found during manual testing or future development. Each defect should be documented using the template in `docs/jira_setup_guide.md`.
 
@@ -461,7 +461,7 @@ The Vehicle Rental System successfully implements the two required functional mo
 - Database design with SQLite including constraints, foreign keys, and indexes
 - Server-side business logic for rental calculation and overlap prevention
 - Responsive UI design with modern CSS
-- Software quality practices with 47 automated tests (100% pass rate)
+- Software quality practices with 82 automated tests (100% pass rate, 96% coverage)
 - Project management planning with JIRA
 
 ### 12.3 Future Enhancements
