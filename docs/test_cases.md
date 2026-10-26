@@ -134,10 +134,10 @@
 
 ## 6. Dual-Tier Automated Testing Breakdown
 - **Black-Box Tests (52 Total):**
-  - **Vehicle Management (22 Tests):** Integration tests executing via pytest HTTP client against temporary SQLite databases (`test_vehicles.py`).
-  - **Booking Management (30 Tests):** Integration tests validating business calculations, collision prevention, date rules, status transitions, lifecycle completion, and CSV reports (`test_bookings.py`).
+  - **Vehicle Management (22 Tests):** Integration tests executing via pytest HTTP client against temporary SQLite databases (`tests/test_vehicles.py`).
+  - **Booking Management (30 Tests):** Integration tests validating business calculations, collision prevention, date rules, status transitions, lifecycle completion, and CSV reports (`tests/test_bookings.py`).
 - **White-Box Tests (30 Total):**
-  - **Structural & Basis Path Tests (30 Tests):** Direct unit tests verifying Control Flow Graphs (CFG), McCabe's Cyclomatic Complexity ($V(G) = 12$ and $16$), and decision branches (`test_whitebox.py`).
+  - **Structural & Basis Path Tests (30 Tests):** Direct unit tests verifying Control Flow Graphs (CFG), McCabe's Cyclomatic Complexity ($V(G) = 12$ and $16$), and decision branches (`tests/test_whitebox.py`).
   - **Coverage:** Full statement and branch coverage analysis documented in [`docs/whitebox_testing.md`](file:///run/media/hiten/OS/PROJECTS/Vehicle%20Rental%20System/docs/whitebox_testing.md).
 - **Manual Functional Testing (PBL Viva Demonstrations):**
   - UI responsiveness, dark/light theme switching, 3D particles background interaction (`3d-effects.js`), modal dialog animations, and flash message auto-dismissal.

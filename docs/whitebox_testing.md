@@ -288,26 +288,26 @@ rootdir: /run/media/hiten/OS/PROJECTS/Vehicle Rental System
 plugins: cov-7.1.0, anyio-4.13.0
 collected 82 items
 
-test_bookings.py ..............................                          [ 36%]
-test_vehicles.py ......................                                  [ 63%]
-test_whitebox.py ..............................                          [100%]
+tests/test_bookings.py ..............................                    [ 36%]
+tests/test_vehicles.py ......................                            [ 63%]
+tests/test_whitebox.py ..............................                    [100%]
 
 ================================ tests coverage ================================
-Name               Stmts   Miss Branch BrPart  Cover
-----------------------------------------------------
-app.py                52     12     10      3    73%
-bookings.py          153      8     48      3    95%
-conftest.py           26      0      0      0   100%
-dashboard.py          28      0      4      0   100%
-schema.py              1      0      0      0   100%
-test_bookings.py     300      0      0      0   100%
-test_vehicles.py     135      0      2      0   100%
-test_whitebox.py     218      0      4      0   100%
-vehicles.py          106      3     42      1    96%
-----------------------------------------------------
-TOTAL               1031     35    112      7    96%
+Name                     Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------------
+app.py                      52     12     10      3    73%
+bookings.py                153      8     48      3    95%
+dashboard.py                28      0      4      0   100%
+schema.py                    1      0      0      0   100%
+tests/conftest.py           26      0      0      0   100%
+tests/test_bookings.py     300      0      0      0   100%
+tests/test_vehicles.py     135      0      2      0   100%
+tests/test_whitebox.py     218      0      4      0   100%
+vehicles.py                106      3     42      1    96%
+----------------------------------------------------------
+TOTAL                     1031     35    112      7    96%
 Coverage HTML written to dir htmlcov
-============================== 82 passed in 1.59s ==============================
+============================== 82 passed in 1.46s ==============================
 ```
 
 ### Coverage Breakdown Summary

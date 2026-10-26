@@ -63,10 +63,10 @@ The application will be available at **http://127.0.0.1:5000**
 python3 -m pytest -v
 
 # Run Black-Box tests only
-python3 -m pytest test_vehicles.py test_bookings.py -v
+python3 -m pytest tests/test_vehicles.py tests/test_bookings.py -v
 
 # Run White-Box tests only (basis paths & branch coverage)
-python3 -m pytest test_whitebox.py -v
+python3 -m pytest tests/test_whitebox.py -v
 
 # Generate visual HTML branch coverage report (equivalent to Eclipse EclEmma)
 python3 -m pytest --cov=. --cov-branch --cov-report=html
@@ -82,12 +82,13 @@ Vehicle Rental System/
 ├── vehicles.py             # Vehicle management blueprint
 ├── bookings.py             # Booking management blueprint
 ├── dashboard.py            # Dashboard blueprint
-├── conftest.py             # Pytest fixtures and helpers
-├── test_vehicles.py        # Vehicle black-box tests (22 tests)
-├── test_bookings.py        # Booking black-box tests (30 tests)
-├── test_whitebox.py        # White-box structural & basis path tests (30 tests)
 ├── requirements.txt        # Python dependencies
 ├── .gitignore              # Git ignore rules
+├── tests/                  # Automated test suite
+│   ├── conftest.py         # Pytest fixtures and isolated database setup
+│   ├── test_vehicles.py    # Vehicle black-box tests (22 tests)
+│   ├── test_bookings.py    # Booking black-box tests (30 tests)
+│   └── test_whitebox.py    # White-box structural & basis path tests (30 tests)
 ├── templates/
 │   ├── base.html           # Base layout template
 │   ├── dashboard.html      # Dashboard page
@@ -100,8 +101,12 @@ Vehicle Rental System/
 │       ├── create.html     # Create booking form
 │       └── view.html       # Booking detail view
 ├── static/
-│   ├── css/style.css       # Complete design system
-│   └── js/main.js          # Client-side interactions
+│   ├── css/
+│   │   └── styles.css      # Complete design system & responsive styling
+│   └── js/
+│       ├── app.js          # Client-side interactions & form logic
+│       ├── 3d-effects.js   # Interactive 3D background effects
+│       └── lucide.min.js   # Icon package
 └── docs/
     ├── test_cases.md        # Black-box test cases & traceability matrix
     ├── whitebox_testing.md  # White-box CFG, Cyclomatic Complexity & Basis Paths

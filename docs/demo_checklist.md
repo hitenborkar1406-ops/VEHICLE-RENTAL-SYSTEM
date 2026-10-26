@@ -171,7 +171,7 @@ Use this checklist during your college evaluation demo or for manual testing.
 python3 -m pytest -v
 
 # 2. Run White-Box structural & basis path tests only
-python3 -m pytest test_whitebox.py -v
+python3 -m pytest tests/test_whitebox.py -v
 
 # 3. Generate and view interactive branch coverage report
 python3 -m pytest --cov=. --cov-branch --cov-report=html
